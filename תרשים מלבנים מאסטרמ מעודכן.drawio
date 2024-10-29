@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" version="24.8.3">
   <diagram name="Page-1" id="7WhMq-b2KSm_JG6Yv_fr">
-    <mxGraphModel dx="794" dy="493" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1222" dy="758" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -44,10 +44,10 @@
         <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-8" value="ESP32" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="360" y="300" width="120" height="230" as="geometry" />
         </mxCell>
-        <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="eO4RsJ36HNUKZ7xdb1Dr-10" target="eO4RsJ36HNUKZ7xdb1Dr-8" edge="1">
+        <mxCell id="fP3FrDEdBFVo0LH6Chn9-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="eO4RsJ36HNUKZ7xdb1Dr-10" target="eO4RsJ36HNUKZ7xdb1Dr-8">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-10" value="נורת LDR" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-10" value="LDR חיישן" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="360" y="570" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-11" value="פרוטוקול בלוטוס" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -131,10 +131,10 @@
         <mxCell id="eO4RsJ36HNUKZ7xdb1Dr-33" value="חיישן מרחק אולטרה סוניק" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="254" y="100" width="100" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="xTsXKUfew77ggg3_23eB-1" value="תצוגת מסך OLED" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="xTsXKUfew77ggg3_23eB-1" value="תצוגת מסך OLED" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="628" y="484" width="120" height="44" as="geometry" />
         </mxCell>
-        <mxCell id="xTsXKUfew77ggg3_23eB-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.978;entryY=0.894;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;" edge="1" parent="1" source="xTsXKUfew77ggg3_23eB-1" target="eO4RsJ36HNUKZ7xdb1Dr-8">
+        <mxCell id="xTsXKUfew77ggg3_23eB-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.978;entryY=0.894;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;" parent="1" source="xTsXKUfew77ggg3_23eB-1" target="eO4RsJ36HNUKZ7xdb1Dr-8" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
