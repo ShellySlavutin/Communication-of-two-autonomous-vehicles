@@ -60,7 +60,8 @@ void moveForward()
     digitalWrite(MOTOR_B2, LOW);
 }
 
-void displayCommand(String command) {
+void displayCommand(String command)
+{
     display.clearDisplay();               // Clear the OLED display
     display.setCursor(0, 10);             // Set cursor position
     display.setTextSize(1.5);             // Set text size
@@ -120,7 +121,7 @@ void loop()
 
                     // Send confirmation back to the master
                     client.println("STOP received");
-                    Serial.println("Sent: STOP received");
+                    Serial.println("Sent: Reply: STOP received");
                 }
 
                 if (command == "START")
@@ -130,7 +131,7 @@ void loop()
 
                     // Send confirmation back to the master
                     client.println("START received");
-                    Serial.println("Sent: START received");
+                    Serial.println("Sent: Reply: START received");
                 }
 
             }

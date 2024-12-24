@@ -80,21 +80,21 @@ void moveForward()
     digitalWrite(MOTOR_B2, LOW);
 }
 
-void displayData(String replay, float distance)
+void displayData(String replay, float space)
 {
     display.clearDisplay();               // Clear the OLED display
     display.setTextSize(1.5);             // Set text size
 
-    // Display the relay on the first line
+    // Display the replay on the first line
     display.setCursor(0, 10);             // Set cursor position
     display.print("Replay received: ");  // Print label
-    display.setCursor(0, 30);             // Move cursor to the next line
+    display.setCursor(0, 20);             // Move cursor to the next line
     display.print(replay);               // Print the command
 
     // Display the distance on the second line
-    display.setCursor(3, 10);             // Setting cursor position
+    display.setCursor(3, 30);             // Setting cursor position
     display.print("Distance: ");
-    display.print(distance);                 // Printing the distance measured by the sensor on the screen
+    display.print(space);                 // Printing the distance measured by the sensor on the screen
     display.print("cm");
 
     display.display();                    // Update the display
@@ -146,8 +146,6 @@ void loop()
 
         String reply = client.readStringUntil('\n');
         reply.trim(); // Remove any extra whitespace or newline characters
-        Serial.print("Received: ");
-        Serial.println(reply);
 
         displayData(reply, space);
     } 
@@ -161,8 +159,6 @@ void loop()
 
         String reply = client.readStringUntil('\n');
         reply.trim(); // Remove any extra whitespace or newline characters
-        Serial.print("Received: ");
-        Serial.println(reply);
 
         displayData(reply, space);
     }
