@@ -16,6 +16,7 @@ const int port = 23;
 #define MOTOR_B2 4
 #define MOTOR_F2 25
 
+
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
 #define SCREEN_WIDTH 128 
@@ -78,11 +79,11 @@ void setup()
     Serial.begin(9600);
     connectToWiFi();
 
-    // Initialize the motors
-    pinMode(MOTOR_F1, OUTPUT);
-    pinMode(MOTOR_B1, OUTPUT);
-    pinMode(MOTOR_F2, OUTPUT);
-    pinMode(MOTOR_B2, OUTPUT);
+  pinMode(MOTOR_F1, OUTPUT);
+  pinMode(MOTOR_B1, OUTPUT);
+
+  pinMode(MOTOR_F2, OUTPUT);
+  pinMode(MOTOR_B2, OUTPUT);
 
     // Initialize the OLED screen
     display.begin(i2c_Address, true); 
