@@ -366,12 +366,14 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 
 uint8_t slaveAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54};
 
+esp_now_peer_info_t peerInfo = {};
+
 String lastReceivedMsg = "";
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  Serial.print("Send Status: ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
+  //Serial.print("Send Status: ");
+  //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
 }
 
 void OnDataRecv(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len)
@@ -426,7 +428,6 @@ void displayData(String message, float distance)
 
 void setup()
 {
-  Serial.begin(9600);
   WiFi.mode(WIFI_STA);
   
   if (esp_now_init() != ESP_OK)
@@ -438,10 +439,9 @@ void setup()
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv);
 
-  esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, slaveAddress, 6);
-  /*peerInfo.channel = 0;
-  peerInfo.encrypt = false;*/
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
 
   if (esp_now_add_peer(&peerInfo) != ESP_OK)
   {

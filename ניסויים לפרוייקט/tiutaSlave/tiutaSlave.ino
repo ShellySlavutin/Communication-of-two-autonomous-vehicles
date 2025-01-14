@@ -30,83 +30,95 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 
 uint8_t masterAddress[] = {0x08, 0xA6, 0xF7, 0x08, 0x3E, 0x98};
 
+esp_now_peer_info_t peerInfo;
+
+String receivedCommand;
+
 
 void stopMotors()
 {
-    // Stop both motor sets
-        ledcWriteChannel(PWM_CHANNEL_F1, 0);
-        ledcWriteChannel(PWM_CHANNEL_F2, 0);
+  // Stop both motor sets
+  ledcWriteChannel(PWM_CHANNEL_F1, 0);
+  ledcWriteChannel(PWM_CHANNEL_F2, 0);
 
-        ledcWriteChannel(PWM_CHANNEL_B1, 0);
-        ledcWriteChannel(PWM_CHANNEL_B2, 0);
+  ledcWriteChannel(PWM_CHANNEL_B1, 0);
+  ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
 
 void moveForward()
 {
-    // Move forward for both motor sets
-        ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
-        ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
+  // Move forward for both motor sets
+  ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
+  ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
 
-        ledcWriteChannel(PWM_CHANNEL_B1, 0);
-        ledcWriteChannel(PWM_CHANNEL_B2, 0);
+  ledcWriteChannel(PWM_CHANNEL_B1, 0);
+  ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
 
 void displayCommand(String command)
 {
-    display.clearDisplay();               // Clear the OLED display
-    display.setCursor(0, 10);             // Set cursor position
-    display.setTextSize(1.5);             // Set text size
-    display.print("Command Received: ");  // Print label
-    display.setCursor(0, 30);             // Move cursor to the next line
-    display.print(command);               // Print the command
-    display.display();                    // Update the display
+  display.clearDisplay();               // Clear the OLED display
+  display.setCursor(0, 10);             // Set cursor position
+  display.setTextSize(1.5);             // Set text size
+  display.print("Command Received: ");  // Print label
+  display.setCursor(0, 30);             // Move cursor to the next line
+  display.print(command);               // Print the command
+  display.display();                    // Update the display
 }
 
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+
+void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len)
 {
-    char command[len + 1];
-    memcpy(command, incomingData, len);
-    command[len] = '\0'; // Null-terminate the string
-    String receivedCommand = String(command);
+  char command[len + 1];
+  memcpy(command, incomingData, len);
+  command[len] = '\0'; // Null-terminate the string
+  String receivedCommandLocal = String(command);
+  receivedCommand = receivedCommandLocal;
 
-    Serial.print("Received: ");
-    Serial.println(receivedCommand);
-
-    // Display the command on the OLED screen
-    displayCommand(receivedCommand);
-
+  // Display the command on the OLED screen
+  displayCommand(receivedCommandLocal);
 }
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+  //Serial.print("Send Status: ");
+  //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
+}
+
 
 void setup()
 {
-    Serial.begin(9600);
+  WiFi.mode(WIFI_STA);
 
-     ledcAttachChannel(Motor_B1 , Freq, Resolution, PWM_CHANNEL_B1);
-     ledcAttachChannel(Motor_F1 , Freq, Resolution, PWM_CHANNEL_F1);
-     ledcAttachChannel(Motor_B2 , Freq, Resolution, PWM_CHANNEL_B2);
-     ledcAttachChannel(Motor_F2 , Freq, Resolution, PWM_CHANNEL_F2);
+  ledcAttachChannel(Motor_B1 , Freq, Resolution, PWM_CHANNEL_B1);
+  ledcAttachChannel(Motor_F1 , Freq, Resolution, PWM_CHANNEL_F1);
+  ledcAttachChannel(Motor_B2 , Freq, Resolution, PWM_CHANNEL_B2);
+  ledcAttachChannel(Motor_F2 , Freq, Resolution, PWM_CHANNEL_F2);
 
-    // Initialize the OLED screen
-    display.begin(i2c_Address, true); 
-    display.clearDisplay();
-    display.setTextColor(SH110X_WHITE);
+  // Initialize the OLED screen
+  display.begin(i2c_Address, true); 
+  display.clearDisplay();
+  display.setTextColor(SH110X_WHITE);
 
-   if (esp_now_init() != ESP_OK)
-   {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-   }
+  if (esp_now_init() != ESP_OK)
+  {
+  Serial.println("Error initializing ESP-NOW");
+  return;
+  }
 
-   esp_now_register_recv_cb(OnDataRecv);
+  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
 
-   esp_now_peer_info_t peerInfo = {};
-   memcpy(peerInfo.peer_addr, slaveAddress, 6);
-
-   if (esp_now_add_peer(&peerInfo) != ESP_OK)
-   {
+  // Register peer
+  memcpy(peerInfo.peer_addr, masterAddress, 6);
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
+  
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
     Serial.println("Failed to add peer");
     return;
-   }
+  }
 
 
 }
@@ -114,28 +126,28 @@ void setup()
 void loop()
 {
   
-         if (receivedCommand == "STOP")
-         {
-           stopMotors();
-           Serial.println("Motors stopped");
+  if (receivedCommand == "STOP")
+  {
+    stopMotors();
+    Serial.println("Motors stopped");
 
-            // Send confirmation back to the master
-           const char *reply = "STOP received";
-           esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-           Serial.println("Sent: STOP received");
-           receivedCommand = "";
-         }
-         else if (receivedCommand == "START")
-         {
-            moveForward();
-            Serial.println("Motors are moving");
+    // Send confirmation back to the master
+    const char *reply = "STOP received";
+    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+    Serial.println("Sent: STOP received");
+    receivedCommand = "";
+  }
+  else if (receivedCommand == "START")
+  {
+    moveForward();
+    Serial.println("Motors are moving");
 
-           // Send confirmation back to the master
-            const char *reply = "START received";
-            esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-            Serial.println("Sent: START received");
-            receivedCommand = "";
-        }
+    // Send confirmation back to the master
+    const char *reply = "START received";
+    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+    Serial.println("Sent: START received");
+    receivedCommand = "";
+  }
   
 }
 
