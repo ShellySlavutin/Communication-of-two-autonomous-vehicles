@@ -62,7 +62,20 @@ void displayCommand(String command)
     display.display();                    // Update the display
 }
 
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+{
+    char command[len + 1];
+    memcpy(command, incomingData, len);
+    command[len] = '\0'; // Null-terminate the string
+    String receivedCommand = String(command);
 
+    Serial.print("Received: ");
+    Serial.println(receivedCommand);
+
+    // Display the command on the OLED screen
+    displayCommand(receivedCommand);
+
+}
 
 void setup()
 {
@@ -78,58 +91,51 @@ void setup()
     display.clearDisplay();
     display.setTextColor(SH110X_WHITE);
 
-    if (esp_now_init() != ESP_OK)
-    {
+   if (esp_now_init() != ESP_OK)
+   {
     Serial.println("Error initializing ESP-NOW");
     return;
-    }
+   }
 
-    
-  }
+   esp_now_register_recv_cb(OnDataRecv);
+
+   esp_now_peer_info_t peerInfo = {};
+   memcpy(peerInfo.peer_addr, slaveAddress, 6);
+
+   if (esp_now_add_peer(&peerInfo) != ESP_OK)
+   {
+    Serial.println("Failed to add peer");
+    return;
+   }
+
 
 }
 
 void loop()
 {
+  
+         if (receivedCommand == "STOP")
+         {
+           stopMotors();
+           Serial.println("Motors stopped");
 
-    if (client)
-    {
-        //Serial.println("Client connected");
+            // Send confirmation back to the master
+           const char *reply = "STOP received";
+           esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+           Serial.println("Sent: STOP received");
+           receivedCommand = "";
+         }
+         else if (receivedCommand == "START")
+         {
+            moveForward();
+            Serial.println("Motors are moving");
 
-        while (client.connected())
-        {
-            if (client.available())
-            {
-                String command = client.readStringUntil('\n');
-                command.trim(); // Remove any extra whitespace or newline characters
-                Serial.print("Received: ");
-                Serial.println(command);
-
-                // Display the command on the OLED screen
-                displayCommand(command);
-           
-                if (command == "STOP")
-                {
-                    stopMotors();
-                    Serial.println("Motors stopped");
-
-                    // Send confirmation back to the master
-                    client.println("STOP received");
-                    Serial.println("Sent: Reply: STOP received");
-                }
-
-                if (command == "START")
-                {
-                    moveForward();
-                    Serial.println("Motors are moving");
-
-                    //Send confirmation back to the master
-                    client.println("START received");
-                    Serial.println("Sent: Reply: START received");
-                }
-
-            }
+           // Send confirmation back to the master
+            const char *reply = "START received";
+            esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+            Serial.println("Sent: START received");
+            receivedCommand = "";
         }
-    }
+  
 }
 
