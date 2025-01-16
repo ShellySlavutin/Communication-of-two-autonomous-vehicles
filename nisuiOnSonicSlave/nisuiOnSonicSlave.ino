@@ -43,9 +43,10 @@ void displayMessage(String title, String message)
 
 void stopMotors()
 {
-  // Stop both motor sets
-  ledcWriteChannel(PWM_CHANNEL_F1, 0);
-  ledcWriteChannel(PWM_CHANNEL_F2, 0);
+  // stooping the motors is the same as setting the pwm to 0 which is what we did here
+  speed = 0;
+  ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
+  ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
 
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
@@ -53,7 +54,7 @@ void stopMotors()
 
 void moveForward()
 {
-  // Move forward for both motor sets
+  speed = 0.5;
   ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
 
@@ -67,12 +68,32 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   memcpy(receivedMsg, incomingData, len);
   receivedMsg[len] = '\0';
 
-  // Display recived msg
-  //displayMessage("Recived :" ,receivedMsg);
+
+  if (strcmp(receivedMsg, "Stop") == 0)
+  {
+    displayMessage("Recived :" ,receivedMsg);
+    stopMotors();
+
+    // Send confirmation back to the master
+    //const char *reply = "Stop received";
+    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+
+
+  }
+
+  else if (strcmp(receivedMsg, "Start") == 0)
+  {
+    displayMessage("Recived :" ,receivedMsg);
+    moveForward();
+
+    // Send confirmation back to the master
+    //const char *reply = "Start received";
+    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
+  }
 
   // Reply back
-  const char *reply = "Hello from Slave";
-  esp_now_send(mac->src_addr, (uint8_t *)reply, strlen(reply));
+  //const char *reply = "Hello from Slave";
+  //esp_now_send(mac->src_addr, (uint8_t *)reply, strlen(reply));
 }
 
 void setup()
@@ -104,28 +125,6 @@ void setup()
 
 void loop()
 {
-    if (receivedMsg == "Stop")
-  {
-    stopMotors();
 
-    // Send confirmation back to the master
-    const char *reply = "Stop received";
-    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-
-    displayMessage("Recived :" ,receivedMsg);
-
-  }
-
-  else if (receivedMsg == "Start")
-  {
-    moveForward();
-
-    // Send confirmation back to the master
-    const char *reply = "Start received";
-    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-
-    displayMessage("Recived :" ,receivedMsg);
-
-  }
 }
 

@@ -61,8 +61,8 @@ void displayMessage(String title, String message)
 
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  //String statusMsg = (status == ESP_NOW_SEND_SUCCESS) ? "Success" : "Fail";
-  //displayMessage("Send Status:", statusMsg);
+  String statusMsg = (status == ESP_NOW_SEND_SUCCESS) ? "Success" : "Fail";
+  displayMessage("Send Status:", statusMsg);
 }
 
 float calculateDistance()
