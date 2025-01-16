@@ -39,13 +39,14 @@ void displayDistance(String title, float distance)
 {
   display.clearDisplay();               // Clear the OLED display
   display.setTextSize(1);              // Set text size
-  display.setCursor(0, 30);             // Set cursor position
+  display.setCursor(0, 20);             // Set cursor position
   display.println(title);              // Print title
-  display.setCursor(0, 40);           // Move cursor to next line
-  display.println(distance);           // Print the message
+  display.setCursor(0, 30);           // Move cursor to next line
+  display.println(distance); 
+  display.setCursor(20, 30); 
+  display.print(" cm");           // Print the message
   display.display();                   // Update the display
 }
-
 
 void displayMessage(String title, String message)
 {
@@ -61,8 +62,7 @@ void displayMessage(String title, String message)
 
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  String statusMsg = (status == ESP_NOW_SEND_SUCCESS) ? "Success" : "Fail";
-  displayMessage("Send Status:", statusMsg);
+
 }
 
 float calculateDistance()
@@ -138,11 +138,7 @@ void setup()
 
 void loop()
 {
-/*  const char *message = "Hello from Master";
-  esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
-  //displayMessage("Sent:", "Hello from Master");
-  delay(2000);
-*/
+
   float distance = calculateDistance();
   if (distance < MIN_DISTANCE)
   {

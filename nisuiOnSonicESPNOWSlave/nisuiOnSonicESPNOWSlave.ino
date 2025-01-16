@@ -35,7 +35,7 @@ void displayMessage(String title, String message)
   display.setTextSize(1);              // Set text size
   display.setCursor(0, 0);             // Set cursor position
   display.println(title);              // Print title
-  display.setCursor(0, 20);           // Move cursor to next line
+  display.setCursor(0, 10);           // Move cursor to next line
   display.println(message);           // Print the message
   display.display();                   // Update the display
 }
@@ -73,27 +73,13 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   {
     displayMessage("Recived :" ,receivedMsg);
     stopMotors();
-
-    // Send confirmation back to the master
-    //const char *reply = "Stop received";
-    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-
-
   }
 
   else if (strcmp(receivedMsg, "Start") == 0)
   {
     displayMessage("Recived :" ,receivedMsg);
     moveForward();
-
-    // Send confirmation back to the master
-    //const char *reply = "Start received";
-    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
   }
-
-  // Reply back
-  //const char *reply = "Hello from Slave";
-  //esp_now_send(mac->src_addr, (uint8_t *)reply, strlen(reply));
 }
 
 void setup()
