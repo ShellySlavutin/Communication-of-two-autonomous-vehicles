@@ -37,10 +37,9 @@ String receivedCommand;
 
 void stopMotors()
 {
-  // Stop both motor sets
-  ledcWriteChannel(PWM_CHANNEL_F1, 0);
-  ledcWriteChannel(PWM_CHANNEL_F2, 0);
-
+  speed = 0;
+  ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
+  ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
@@ -48,9 +47,9 @@ void stopMotors()
 void moveForward()
 {
   // Move forward for both motor sets
+  speed = 0.5;
   ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
-
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
@@ -88,6 +87,11 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 
 void setup()
 {
+  // Initialize the OLED screen
+  display.begin(i2c_Address, true); 
+  display.clearDisplay();
+  display.setTextColor(SH110X_WHITE);
+
   WiFi.mode(WIFI_STA);
 
   ledcAttachChannel(Motor_B1 , Freq, Resolution, PWM_CHANNEL_B1);
@@ -95,14 +99,8 @@ void setup()
   ledcAttachChannel(Motor_B2 , Freq, Resolution, PWM_CHANNEL_B2);
   ledcAttachChannel(Motor_F2 , Freq, Resolution, PWM_CHANNEL_F2);
 
-  // Initialize the OLED screen
-  display.begin(i2c_Address, true); 
-  display.clearDisplay();
-  display.setTextColor(SH110X_WHITE);
-
   if (esp_now_init() != ESP_OK)
   {
-  Serial.println("Error initializing ESP-NOW");
   return;
   }
 
@@ -116,7 +114,6 @@ void setup()
   
   // Add peer        
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
     return;
   }
 
@@ -129,23 +126,19 @@ void loop()
   if (receivedCommand == "STOP")
   {
     stopMotors();
-    Serial.println("Motors stopped");
 
     // Send confirmation back to the master
-    const char *reply = "STOP received";
-    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-    Serial.println("Sent: STOP received");
+    //const char *reply = "STOP received";
+    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
     receivedCommand = "";
   }
   else if (receivedCommand == "START")
   {
     moveForward();
-    Serial.println("Motors are moving");
 
     // Send confirmation back to the master
-    const char *reply = "START received";
-    esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
-    Serial.println("Sent: START received");
+    //const char *reply = "START received";
+    //esp_now_send(masterAddress, (uint8_t *)reply, strlen(reply));
     receivedCommand = "";
   }
   
