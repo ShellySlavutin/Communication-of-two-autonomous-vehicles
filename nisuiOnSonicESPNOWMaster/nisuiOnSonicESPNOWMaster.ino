@@ -28,6 +28,11 @@
 #define PWM_CHANNEL_B2 2
 #define PWM_CHANNEL_F2 3
 
+#define BLUE_RGB_PIN 2
+#define RED_RGB_PIN 26
+#define GREEN_RGB_PIN 27
+
+
 float speed = 0.5;
 
 // Creating an object for communication with the OLED screen
@@ -65,6 +70,31 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 
 }
 
+void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
+{
+  char receivedMsg[len + 1];
+  memcpy(receivedMsg, incomingData, len);
+  receivedMsg[len] = '\0';
+
+
+  if (strcmp(receivedMsg, "Stop received") == 0)
+  {
+    // Turn on blue light to indicate stopping
+    digitalWrite(RED_RGB_PIN, LOW);
+    digitalWrite(GREEN_RGB_PIN, LOW);
+    digitalWrite(BLUE_RGB_PIN, HIGH);
+
+  }
+
+  else if (strcmp(receivedMsg, "Start received") == 0)
+  {
+    // Turn on green light to indicate stopping
+    digitalWrite(RED_RGB_PIN, LOW);
+    digitalWrite(GREEN_RGB_PIN, HIGH);
+    digitalWrite(BLUE_RGB_PIN, LOW);
+  }
+}
+
 float calculateDistance()
 {
   digitalWrite(triger_Pin, LOW);
@@ -100,6 +130,16 @@ void moveForward()
 
 void setup()
 {
+  // Initialize all LEDs as output
+  pinMode(RED_RGB_PIN, OUTPUT);
+  pinMode(GREEN_RGB_PIN, OUTPUT);
+  pinMode(BLUE_RGB_PIN, OUTPUT);
+
+  // Turn all LEDs off initially
+  digitalWrite(RED_RGB_PIN, LOW);
+  digitalWrite(GREEN_RGB_PIN, LOW);
+  digitalWrite(BLUE_RGB_PIN, LOW);
+
   // Initialize the display
   display.begin(i2c_Address,true); 
   display.clearDisplay();
@@ -114,6 +154,7 @@ void setup()
   }
 
   esp_now_register_send_cb(onDataSent);
+  esp_now_register_recv_cb(onDataRecv);
 
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, slaveAddress, 6);

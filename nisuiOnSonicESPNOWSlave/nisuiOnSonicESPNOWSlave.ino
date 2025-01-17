@@ -26,6 +26,8 @@
 float speed = 0.5;
 String receivedMsg = " ";
 
+uint8_t masterAddress[] = {0x08, 0xA6, 0xF7, 0x08, 0x3E, 0x98};
+
 // Creating an object for communication with the OLED screen
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -73,12 +75,18 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   {
     displayMessage("Recived :" ,receivedMsg);
     stopMotors();
+
+    const char *message = "Stop received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
   else if (strcmp(receivedMsg, "Start") == 0)
   {
     displayMessage("Recived :" ,receivedMsg);
     moveForward();
+
+    const char *message = "Start received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 }
 
@@ -99,6 +107,17 @@ void setup()
   }
 
   esp_now_register_recv_cb(onDataRecv);
+
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, masterAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
+  {
+    displayMessage("Error", "Add Peer Fail");
+    return;
+  }
 
   displayMessage("Status", "ESP-NOW Ready");
 
