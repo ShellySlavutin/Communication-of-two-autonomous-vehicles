@@ -27,14 +27,16 @@ void loop() {
     // The front leds will be white (because of the blue tint we put it on 150)
     NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
     NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
 
     // The back leds will be red
     NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
     NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
 
-    // Winkers will be yellow
-    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 100, 0));  
-    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 100, 0));  
+    // Winkers will be yellow 
+    //NeoPixel.setPixelColor(2, NeoPixel.Color(255, 100, 0));  
+    //NeoPixel.setPixelColor(3, NeoPixel.Color(255, 100, 0));  
 
     NeoPixel.show(); // update to the NeoPixel Led Strip
 
