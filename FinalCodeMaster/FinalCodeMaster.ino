@@ -3,6 +3,7 @@
 #include <Adafruit_SH110X.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <Adafruit_NeoPixel.h>
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -32,13 +33,79 @@
 #define RED_RGB_PIN 26
 #define GREEN_RGB_PIN 27
 
+#define NEOPIXEL_PIN 5 
+#define NUM_PIXELS 6
+
+#define LDR 34
 
 float speed = 0.5;
 
-// Creating an object for communication with the OLED screen
-Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 uint8_t slaveAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54};
+
+Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800); // Creating an object for the neoPixel
+
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
+
+void nightLights()
+{
+  if (digitalRead(LDR) == LOW)
+  {
+    // Turn on the lights
+
+    // The front leds will be white (because of the blue tint we put it on 150)
+    NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
+
+    // The back leds will be red
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+
+    // Winkers will be yellow 
+    //NeoPixel.setPixelColor(2, NeoPixel.Color(255, 100, 0));  
+    //NeoPixel.setPixelColor(3, NeoPixel.Color(255, 100, 0));  
+
+    NeoPixel.show(); // update to the NeoPixel Led Strip
+
+  }
+  else
+  {
+    // Turn off the lights
+    NeoPixel.clear(); // Start the program with lights off
+    NeoPixel.show(); // update to the NeoPixel Led Strip
+
+  }
+}
+
+void stopLights()
+{
+  if (digitalRead(LDR) == LOW)
+  {
+    // Turn on all the light since it is noght and stop the lights
+
+    // The front leds will be white (because of the blue tint we put it on 150)
+    NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
+
+    // The back leds will be red
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+
+    NeoPixel.show(); // update to the NeoPixel Led Strip
+
+  }
+  else
+  {
+    // Only the back leds will be red
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+    
+    NeoPixel.show(); // update to the NeoPixel Led Strip
+  }
+}
 
 void displayDistance(String title, float distance)
 {
@@ -116,6 +183,8 @@ void stopMotors()
 
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
+
+  stopLights();
 }
 
 void moveForward()
@@ -174,12 +243,21 @@ void setup()
   ledcAttachChannel(Motor_F1 , Freq, Resolution, PWM_CHANNEL_F1);
   ledcAttachChannel(Motor_B2 , Freq, Resolution, PWM_CHANNEL_B2);
   ledcAttachChannel(Motor_F2 , Freq, Resolution, PWM_CHANNEL_F2);
+
+  NeoPixel.begin(); // initialize NeoPixel strip object (REQUIRED)
+
+  delay (200);
+
+  NeoPixel.clear(); // Start the program with lights off
+  NeoPixel.show(); // update to the NeoPixel Led Strip
+
+  pinMode(LDR, INPUT); // Init the LDR
 }
 
 
 void loop()
 {
-
+  nightLights();
   float distance = calculateDistance();
   if (distance < MIN_DISTANCE)
   {
