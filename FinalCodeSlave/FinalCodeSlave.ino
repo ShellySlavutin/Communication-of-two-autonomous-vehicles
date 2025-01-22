@@ -38,44 +38,11 @@ Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800); // C
 
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
 
-void nightLights()
+void headLights(float distance)
 {
-  if (digitalRead(LDR) == LOW)
+  NeoPixel.clear();
+  if ((digitalRead(LDR) == LOW && (strcmp(receivedMsg, "Stop") == 0)) || (digitalRead(LDR) == LOW)) // Night and stop or night -> all leds
   {
-    // Turn on the lights
-
-    // The front leds will be white (because of the blue tint we put it on 150)
-    NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
-
-    // The back leds will be red
-    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
-
-    // Winkers will be yellow 
-    //NeoPixel.setPixelColor(2, NeoPixel.Color(255, 100, 0));  
-    //NeoPixel.setPixelColor(3, NeoPixel.Color(255, 100, 0));  
-
-    NeoPixel.show(); // update to the NeoPixel Led Strip
-
-  }
-  else
-  {
-    // Turn off the lights
-    NeoPixel.clear(); // Start the program with lights off
-    NeoPixel.show(); // update to the NeoPixel Led Strip
-
-  }
-}
-
-void stopLights()
-{
-  if (digitalRead(LDR) == LOW)
-  {
-    NeoPixel.clear(); 
-    NeoPixel.show();
     // Turn on all the light since it is noght and stop the lights
 
     // The front leds will be white (because of the blue tint we put it on 150)
@@ -91,13 +58,18 @@ void stopLights()
     NeoPixel.show(); // update to the NeoPixel Led Strip
 
   }
-  else
+  else if (digitalRead(LDR) == HIGH && (strcmp(receivedMsg, "Stop") == 0)) // Light and stop -> only back leds
   {
     // Only the back leds will be red
     NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
     NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
     
     NeoPixel.show(); // update to the NeoPixel Led Strip
+  }
+  else
+  {
+    NeoPixel.clear();
+    NeoPixel.show(); 
   }
 }
 
@@ -122,9 +94,6 @@ void stopMotors()
 
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
-
-  stopLights();
-
 }
 
 void moveForward()
