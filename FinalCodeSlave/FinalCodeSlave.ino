@@ -38,10 +38,10 @@ Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800); // C
 
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
 
-void headLights(float distance)
+void headLights(bool isStopped)
 {
   NeoPixel.clear();
-  if ((digitalRead(LDR) == LOW && (strcmp(receivedMsg, "Stop") == 0)) || (digitalRead(LDR) == LOW)) // Night and stop or night -> all leds
+  if ((digitalRead(LDR) == LOW && isStopped == true) || (digitalRead(LDR) == LOW)) // Night and stop or night -> all leds
   {
     // Turn on all the light since it is noght and stop the lights
 
@@ -58,7 +58,7 @@ void headLights(float distance)
     NeoPixel.show(); // update to the NeoPixel Led Strip
 
   }
-  else if (digitalRead(LDR) == HIGH && (strcmp(receivedMsg, "Stop") == 0)) // Light and stop -> only back leds
+  else if (digitalRead(LDR) == HIGH && isStopped == true) // Light and stop -> only back leds
   {
     // Only the back leds will be red
     NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
@@ -108,8 +108,6 @@ void moveForward()
 
 void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
 {
-
-
   char receivedMsg[len + 1];
   memcpy(receivedMsg, incomingData, len);
   receivedMsg[len] = '\0';
@@ -120,6 +118,8 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     displayMessage("Recived :" ,receivedMsg);
     stopMotors();
 
+    headLights(true);
+
     const char *message = "Stop received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
@@ -128,6 +128,8 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   {
     displayMessage("Recived :" ,receivedMsg);
     moveForward();
+
+    headLights(false);
 
     const char *message = "Start received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
