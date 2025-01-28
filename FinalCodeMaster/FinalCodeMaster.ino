@@ -16,10 +16,10 @@
 
 #define MIN_DISTANCE 10
 
-#define Motor_B1 12
-#define Motor_F1 13
-#define Motor_B2 4
-#define Motor_F2 25
+#define Motor_B1 12 
+#define Motor_F1 13 
+#define Motor_B2 4  
+#define Motor_F2 25 
 
 #define Resolution 8
 #define Freq 1000
