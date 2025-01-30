@@ -12,6 +12,9 @@ void setup()
   mp3.volume(30); // Set volume to 30
 
   mp3.play(1);// Play the first MP3 file (0001.mp3)
+  delay(2000);
+  mp3.play(2);// Play the first MP3 file (0002.mp3)
+  delay(2000);
 }
 
 void loop() { }
