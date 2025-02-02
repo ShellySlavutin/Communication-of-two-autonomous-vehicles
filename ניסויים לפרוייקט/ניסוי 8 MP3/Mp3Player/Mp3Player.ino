@@ -15,6 +15,11 @@ void setup()
   delay(2000);
   mp3.play(2);// Play the first MP3 file (0002.mp3)
   delay(2000);
+  mp3.play(3);// Play the first MP3 file (0003.mp3)
+  delay(2000);
 }
 
-void loop() { }
+void loop()
+{
+
+}
