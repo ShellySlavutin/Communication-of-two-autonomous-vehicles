@@ -104,7 +104,8 @@ void moveForward() {
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
 
-void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len) {
+void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
+{
   // Mark as connected and update last received time
   isConnected = true;
   lastReceivedTime = millis();
@@ -113,13 +114,16 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   memcpy(receivedMsg, incomingData, len);
   receivedMsg[len] = '\0';
 
-  if (strcmp(receivedMsg, "Stop") == 0) {
+  if (strcmp(receivedMsg, "Stop") == 0)
+  {
     displayMessage("Received:", receivedMsg);
     stopMotors();
     headLights(true);
     const char *message = "Stop received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-  } else if (strcmp(receivedMsg, "Start") == 0) {
+  }
+  else if (strcmp(receivedMsg, "Start") == 0)
+  {
     displayMessage("Received:", receivedMsg);
     moveForward();
     headLights(false);
@@ -128,13 +132,16 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   }
 }
 
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  if (status != ESP_NOW_SEND_SUCCESS) {
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+  if (status != ESP_NOW_SEND_SUCCESS)
+  {
     backupStop();
   }
 }
 
-void setup() {
+void setup()
+{
   display.begin(i2c_Address, true); 
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
@@ -142,7 +149,8 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
 
-  if (esp_now_init() != ESP_OK) {
+  if (esp_now_init() != ESP_OK)
+  {
     displayMessage("Error", "Init ESP-NOW");
     return;
   }
@@ -153,7 +161,8 @@ void setup() {
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
+  {
     displayMessage("Error", "Add Peer Fail");
     return;
   }
@@ -172,13 +181,16 @@ void setup() {
   pinMode(IR_SENSOR2_PIN, INPUT);
 }
 
-void loop() {
+void loop()
+{
   // Check for connection timeout
-  if (millis() - lastReceivedTime > TIMEOUT) {
+  if (millis() - lastReceivedTime > TIMEOUT)
+  {
     isConnected = false;
   }
 
-  if (!isConnected) {
+  if (!isConnected)
+  {
     backupStop();
   }
 }
