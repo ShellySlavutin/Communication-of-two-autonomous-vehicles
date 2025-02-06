@@ -5,7 +5,8 @@
 #define redButton 19
 #define blueButton 23
 
-void setup() {
+void setup()
+{
   // Initialize all LEDs as output
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
