@@ -171,9 +171,9 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     
     if(flagMSG)
     {
-       delay (2000);
-       mp3.play(4);// Play the third MP3 file (0003.mp3)
-       flagMSG = false;
+        delay (2000);
+        mp3.play(4);// Play the third MP3 file (0003.mp3)
+        flagMSG = false;
     }
   }
 
