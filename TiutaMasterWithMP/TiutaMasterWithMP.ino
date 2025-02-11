@@ -82,7 +82,6 @@ void headLights(float distance)
 
   }
   
-
   else if (digitalRead(LDR) == HIGH && distance < MIN_DISTANCE) // Light and stop -> only back leds
   {
     // Only the back leds will be red
@@ -97,28 +96,30 @@ void headLights(float distance)
     NeoPixel.clear();
     NeoPixel.show(); 
   }
+
 }
 
 void dayNightMode()
 {
-    if ((digitalRead(LDR) == LOW))
+  if ((digitalRead(LDR) == LOW))
+  {
+    if(flagLDR)
     {
-       if(flagLDR)
-       {
-         mp3.play(2);// Play the second MP3 file (0002.mp3)
-         flagLDR = false;
-       }
+      mp3.play(2);// Play the second MP3 file (0002.mp3)
+      flagLDR = false;
     }
+  }
 
-    else
+  else
+  {
+    if(flagLDR)
     {
-       if(flagLDR)
-       {
-         mp3.play(3);// Play the third MP3 file (0003.mp3)
-         flagLDR = false;
-       }
+      mp3.play(3);// Play the third MP3 file (0003.mp3)
+      flagLDR = false;
     }
+  }
 }
+
 void displayDistance(String title, float distance)
 {
   display.clearDisplay();               // Clear the OLED display
@@ -158,8 +159,8 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 
   if (strcmp(receivedMsg, lastReceivedMsg) != 0) // Check if the message changed
     {
-        strcpy(lastReceivedMsg, receivedMsg); // Update last received message
-        flagMSG = true; // Reset the flag since the message has changed
+      strcpy(lastReceivedMsg, receivedMsg); // Update last received message
+      flagMSG = true; // Reset the flag since the message has changed
     }
 
   if (strcmp(receivedMsg, "Stop received") == 0)
@@ -171,9 +172,8 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     
     if(flagMSG)
     {
-        delay (2000);
-        mp3.play(4);// Play the third MP3 file (0003.mp3)
-        flagMSG = false;
+      mp3.play(4);// Play the third MP3 file (0003.mp3)
+      flagMSG = false;
     }
   }
 
@@ -205,7 +205,7 @@ float calculateDistance()
   return distance;
 }
 
-void stopMotors(bool flagOB)
+void stopMotors()
 {
   // stooping the motors is the same as setting the pwm to 0 which is what we did here
   speed = 0;
@@ -214,11 +214,6 @@ void stopMotors(bool flagOB)
 
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
-  if(flagOB)
-  {
-    mp3.play(1);// Play the first MP3 file (0001.mp3)
-  }
-
 }
 
 void moveForward()
@@ -304,8 +299,7 @@ void loop()
   {
     const char *message = "Stop";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
-    stopMotors(flagOB);
-    flagOB = false;
+    stopMotors();
     displayDistance("Distance:" , distance);
 
   }
@@ -316,7 +310,6 @@ void loop()
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
     moveForward();
     displayDistance("Distance:" , distance);
-    flagOB = true;
   }
 
   delay(100);
