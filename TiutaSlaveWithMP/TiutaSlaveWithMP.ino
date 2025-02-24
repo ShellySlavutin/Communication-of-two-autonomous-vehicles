@@ -39,7 +39,6 @@
 HardwareSerial mp3Serial(1);  //  Defines UART1 for communicating with DFPlayer Mini
 DFRobotDFPlayerMini mp3;      // Create an object to control mp3
 
-bool flagBS = false; 
 bool flagLDR = true; 
 bool flagMSG = true;
 
@@ -107,7 +106,6 @@ void dayNightMode()
   }
 }
 
-
 void backupStop() 
 {
   int rawValue1 = digitalRead(IR_SENSOR1_PIN);
@@ -115,15 +113,14 @@ void backupStop()
 
   if (rawValue1 == HIGH && rawValue2 == HIGH) 
   {
-    moveForward(flagMSG);
+    moveForward(false);
   } 
   else 
   {
-    stopMotors(flagMSG);
- //   flagBS = false;
+    stopMotors(false);
   }
-}
 
+}
 
 void displayMessage(String title, String message)
 {
@@ -146,7 +143,7 @@ void stopMotors(bool flagMSG)
   
   if (flagMSG) 
   {
-    mp3.play(7);
+    mp3.play(6);
     delay(2000); 
   }
 
@@ -162,7 +159,7 @@ void moveForward(bool flagMSG)
 
   if (flagMSG) 
   {
-    mp3.play(6); 
+    mp3.play(7); 
     delay(2000);
   }
 
@@ -210,10 +207,7 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  if (status != ESP_NOW_SEND_SUCCESS)
-  {
-    backupStop();
-  }
+
 }
 
 void setup()
@@ -271,7 +265,7 @@ void loop()
   // Check for connection timeout
   if (millis() - lastReceivedTime > TIMEOUT)
   {
-    //flagBS = true; // No communiction so turn on the backup stop option
+    // No communiction so turn on the backup stop option
     isConnected = false;
   }
 
