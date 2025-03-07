@@ -19,7 +19,7 @@
 #define MIN_DISTANCE 10 // Minimum distance for stop function
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 0
+#define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
