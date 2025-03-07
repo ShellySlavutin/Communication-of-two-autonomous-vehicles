@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <Adafruit_NeoPixel.h>
-#include "DFRobotDFPlayerMini.h" // library
+#include "DFRobotDFPlayerMini.h" 
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -34,18 +34,18 @@
 
 #define LDR 34
 
+#define RECORDING_TIME 2000
+
 HardwareSerial mp3Serial(1);  //  Defines UART1 for communicating with DFPlayer Mini
 DFRobotDFPlayerMini mp3;      // Create an object to control mp3
 
-float speed = 0.5; //speed for DC motors
-
 bool flagLDR = true; 
 bool flagMSG = true;
-bool flagBS = true;
+
+float speed = 0.5;
 
 String receivedMsg = " ";
 char lastReceivedMsg[20] = ""; // Stores the last received message
-
 uint8_t masterAddress[] = {0x08, 0xA6, 0xF7, 0x08, 0x3E, 0x98};
 
 // NeoPixel and display objects
@@ -55,7 +55,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 // Connection tracking
 bool isConnected = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
-const unsigned long TIMEOUT = 2000; // Timeout period in milliseconds
+const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
 
 void headLights(bool isStopped)
 {
@@ -70,14 +70,12 @@ void headLights(bool isStopped)
     NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
     NeoPixel.show();
   }
-
   else if (digitalRead(LDR) == HIGH && isStopped == true)
   {
     NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
     NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
     NeoPixel.show();
   }
-
   else
   {
     NeoPixel.clear();
@@ -102,42 +100,26 @@ void dayNightMode()
     if(flagLDR)
     {
       mp3.play(3);// Play the third MP3 file (0003.mp3)
-      delay(2000);      
+      delay(2000);
       flagLDR = false;
     }
   }
 }
 
-void MSGressivedStop(bool flagMSG)
-{
-  if(flagMSG)
-  {
-    mp3.play(6);
-  }
-}
-
-void MSGressivedStart(bool flagMSG)
-{
-  if(flagMSG)
-  {
-    mp3.play(7);
-  }
-}
-
-void backupStop()
+void backupStop() 
 {
   int rawValue1 = digitalRead(IR_SENSOR1_PIN);
   int rawValue2 = digitalRead(IR_SENSOR2_PIN);
-  float avgRawValue = (rawValue1 + rawValue2) / 2;
 
-  if (avgRawValue == HIGH)
+  if (rawValue1 == HIGH && rawValue2 == HIGH) 
   {
-    moveForward();
-  }
-  else if (avgRawValue == LOW)
+    moveForward(false);
+  } 
+  else 
   {
-    stopMotors();
+    stopMotors(false);
   }
+
 }
 
 void displayMessage(String title, String message)
@@ -151,28 +133,41 @@ void displayMessage(String title, String message)
   display.display();
 }
 
-void stopMotors()
+void stopMotors(bool flagMSG)
 {
   speed = 0;
   ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
+  
+  if (flagMSG) 
+  {
+    mp3.play(6);
+    delay(2000); 
+  }
+
 }
 
-void moveForward()
+void moveForward(bool flagMSG)
 {
   speed = 0.5;
   ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
+
+  if (flagMSG) 
+  {
+    mp3.play(7); 
+    delay(2000);
+  }
+
 }
 
 void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
 {
-  dayNightMode();
-  // Mark as connected and update last received time
+  //flagBS = false; // As long as there is connection keep the BS flag off
   isConnected = true;
   lastReceivedTime = millis();
 
@@ -189,43 +184,30 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   if (strcmp(receivedMsg, "Stop") == 0)
   {
     displayMessage("Received:", receivedMsg);
-    stopMotors();
-
-    if (flagMSG)
-    {
-      MSGressivedStop(flagMSG);
-      flagMSG = false; // Reset after playing the stop message
-    }
-
+    stopMotors(flagMSG);
+    flagMSG = false;
     headLights(true);
     const char *message = "Stop received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+
   }
 
   else if (strcmp(receivedMsg, "Start") == 0)
   {
     displayMessage("Received:", receivedMsg);
-    moveForward();
-    
-    if (flagMSG)
-    {
-      MSGressivedStart(flagMSG);
-      flagMSG = false; // Reset after playing the start message
-    }
-
+    moveForward(flagMSG);
+    flagMSG = false;
     headLights(false);
     const char *message = "Start received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+
   }
 }
 
+
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  /*if (status != ESP_NOW_SEND_SUCCESS)
-  {
-    backupStop(flagBS);
-  }
-  */
+
 }
 
 void setup()
@@ -244,7 +226,7 @@ void setup()
   }
 
   esp_now_register_recv_cb(onDataRecv);
-
+  
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, masterAddress, 6);
   peerInfo.channel = 0;
@@ -278,9 +260,12 @@ void setup()
 
 void loop()
 {
+  dayNightMode();
+  
   // Check for connection timeout
   if (millis() - lastReceivedTime > TIMEOUT)
   {
+    // No communiction so turn on the backup stop option
     isConnected = false;
   }
 
