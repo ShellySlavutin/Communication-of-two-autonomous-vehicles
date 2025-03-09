@@ -28,6 +28,12 @@
 #define NEOPIXEL_PIN 5 
 #define NUM_PIXELS 6
 
+// IR Sensor Pins
+#define STRIP_SENSOR_1 36
+#define STRIP_SENSOR_2 39
+#define STRIP_SENSOR_3 15
+#define STRIP_SENSOR_4 5
+
 // Define the analog pin connected to the IR sensor
 #define IR_SENSOR1_PIN 35 
 #define IR_SENSOR2_PIN 36
@@ -113,7 +119,8 @@ void backupStop()
 
   if (rawValue1 == HIGH && rawValue2 == HIGH) 
   {
-    moveForward(false);
+    moveAccordingToStrip(false);
+    //moveForward(false);
   } 
   else 
   {
@@ -165,6 +172,13 @@ void moveForward(bool flagMSG)
 
 }
 
+void motorsWrite(float m1, float m2, float m3, float m4) {
+  ledcWrite(Motor_F1, m1 * 255);
+  ledcWrite(Motor_F2, m2 * 255);
+  ledcWrite(Motor_B1, m3 * 255);
+  ledcWrite(Motor_B2, m4 * 255);
+}
+
 void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
 {
   //flagBS = false; // As long as there is connection keep the BS flag off
@@ -195,7 +209,8 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   else if (strcmp(receivedMsg, "Start") == 0)
   {
     displayMessage("Received:", receivedMsg);
-    moveForward(flagMSG);
+    //moveForward(flagMSG);
+    moveAccordingToStrip(flagMSG)
     flagMSG = false;
     headLights(false);
     const char *message = "Start received";
@@ -208,6 +223,72 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
 
+}
+
+void moveAccordingToStrip(bool flag)
+{
+  if (flagMSG) 
+  {
+    mp3.play(7); 
+    delay(2000);
+  }
+
+  // Drive forward
+  if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
+  {
+    motorsWrite(0.4, 0.4, 0, 0);
+
+  // Extreme correcting to the left at the start, when the middle sensors see the line
+   if(digitalRead(STRIP_SENSOR_4))
+   {
+    motorsWrite(1,0,0,0);
+   }
+
+   // Extreme correcting to the right at the start, when the middle sensors see the line
+   else if(digitalRead(STRIP_SENSOR_1))
+   {
+    motorsWrite(0,1,0,0);
+   }
+  } 
+
+  // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
+  else if(digitalRead(STRIP_SENSOR_4))
+  {
+    motorsWrite(1,0,0,0);
+    if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+    {  
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+    }
+
+  }
+
+  // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
+  else if(digitalRead(STRIP_SENSOR_1))
+  {
+    motorsWrite(0,1,0,0);
+    if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
+    {  
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+    }  
+  }
+
+  // Minor correcting to the left, when the car moves a bit, when there are twists.
+  else if (digitalRead(STRIP_SENSOR_3))
+  {
+    motorsWrite(0.8, 0.1, 0, 0);
+  } 
+
+  // Minor correcting to the right, when the car moves a bit, when there are twists.
+  else if (digitalRead(STRIP_SENSOR_2))
+  {
+    motorsWrite(0.1, 0.8, 0, 0);
+  } 
+
+  // Stop
+  else
+  {
+    motorsWrite(0, 0, 0, 0);
+  }
 }
 
 void setup()
@@ -246,6 +327,11 @@ void setup()
   NeoPixel.begin();
   NeoPixel.clear();
   NeoPixel.show();
+
+  pinMode(STRIP_SENSOR_1, INPUT);
+  pinMode(STRIP_SENSOR_2, INPUT);
+  pinMode(STRIP_SENSOR_3, INPUT);
+  pinMode(STRIP_SENSOR_4, INPUT);
 
   pinMode(LDR, INPUT);
   pinMode(IR_SENSOR1_PIN, INPUT);
