@@ -29,7 +29,7 @@
 #define NUM_PIXELS 6
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 36
+#define STRIP_SENSOR_1 32
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
@@ -210,7 +210,7 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   {
     displayMessage("Received:", receivedMsg);
     //moveForward(flagMSG);
-    moveAccordingToStrip(flagMSG)
+    moveAccordingToStrip(flagMSG);
     flagMSG = false;
     headLights(false);
     const char *message = "Start received";

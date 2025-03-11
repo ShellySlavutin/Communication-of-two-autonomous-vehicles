@@ -1,35 +1,27 @@
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
-#include <WiFi.h>
-#include <esp_now.h>
-#include <Adafruit_NeoPixel.h>
+#include <ESP32Servo.h>
 
-// OLED pins
-#define i2c_Address 0x3c // OLED screen I2C address
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
+#define SERVO 18
+#define DELAY_SERVO 2000
 
-Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
+Servo ultrasonicServo;
+
+//Ultrasonic Pins
+#define triger_Pin 32
+#define echo_Pin 33  
+
+#define MIN_DISTANCE 10 // Minimum distance for stop function
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 32
+#define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
 
-// OLED pins
-#define i2c_Address 0x3c // OLED screen I2C address
-#define SCREEN_WIDTH 128 
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1 
-
-// Motor and PWM pins
+// Motors pins
 #define Motor_B1 12 
 #define Motor_F1 13 
 #define Motor_B2 4  
-#define Motor_F2 25  
+#define Motor_F2 25 
 
 #define Resolution 8
 #define Freq 1000
@@ -39,46 +31,77 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 #define PWM_CHANNEL_B2 2
 #define PWM_CHANNEL_F2 3
 
-void setup() {
-  // Initialize the display
-  display.begin(i2c_Address,true); 
-  display.clearDisplay();
-  display.setTextColor(SH110X_WHITE);
+void setup() 
+{
+  pinMode(triger_Pin, OUTPUT);
+  pinMode(echo_Pin, INPUT);
+
+  ledcAttachChannel(Motor_B1 , Freq, Resolution, PWM_CHANNEL_B1);
+  ledcAttachChannel(Motor_F1 , Freq, Resolution, PWM_CHANNEL_F1);
+  ledcAttachChannel(Motor_B2 , Freq, Resolution, PWM_CHANNEL_B2);
+  ledcAttachChannel(Motor_F2 , Freq, Resolution, PWM_CHANNEL_F2);
 
   pinMode(STRIP_SENSOR_1, INPUT);
   pinMode(STRIP_SENSOR_2, INPUT);
   pinMode(STRIP_SENSOR_3, INPUT);
   pinMode(STRIP_SENSOR_4, INPUT);
 
-  // Set up PWM channels for motors
-  ledcAttach(Motor_F1, Freq, Resolution);
-  ledcAttach(Motor_F2, Freq, Resolution);
-  ledcAttach(Motor_B1, Freq, Resolution);
-  ledcAttach(Motor_B2, Freq, Resolution);
-
-  delay(1000);
+  ultrasonicServo.attach(SERVO);
 }
 
 void loop() 
+{
+  ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
+  distance = calculateDistance();
+  if (distance < MIN_DISTANCE)
+  {
+    // There is an obstecle forward, check other 
+    ultrasonicServo.write(145);  // Rotate the servo to the right
+    distance = calculateDistance();
+
+    ultrasonicServo.write(35);  // Rotate the servo to the left
+    distance = calculateDistance();
+  }
+
+}
+
+float calculateDistance()
+{
+  digitalWrite(triger_Pin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triger_Pin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triger_Pin, LOW);
+  float Duration = pulseIn(echo_Pin, HIGH);
+  float distance = Duration / 58.0;
+  return distance;
+}
+
+void motorsWrite(float m1, float m2, float m3, float m4) 
+{
+  ledcWrite(Motor_F1, m1 * 255);
+  ledcWrite(Motor_F2, m2 * 255);
+  ledcWrite(Motor_B1, m3 * 255);
+  ledcWrite(Motor_B2, m4 * 255);
+}
+
+void moveAccordingToStrip()
 {
   // Drive forward
   if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
     motorsWrite(0.4, 0.4, 0, 0);
-    displayMessage("state:", "foward");
 
   // Extreme correcting to the left at the start, when the middle sensors see the line
    if(digitalRead(STRIP_SENSOR_4))
    {
     motorsWrite(1,0,0,0);
-    displayMessage("state:", "extreme left");  
    }
 
    // Extreme correcting to the right at the start, when the middle sensors see the line
    else if(digitalRead(STRIP_SENSOR_1))
    {
     motorsWrite(0,1,0,0);
-    displayMessage("state:", "extreme right");   
    }
   } 
 
@@ -86,7 +109,6 @@ void loop()
   else if(digitalRead(STRIP_SENSOR_4))
   {
     motorsWrite(1,0,0,0);
-    displayMessage("state:", "extreme left");    
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -98,7 +120,6 @@ void loop()
   else if(digitalRead(STRIP_SENSOR_1))
   {
     motorsWrite(0,1,0,0);
-    displayMessage("state:", "extreme right");  
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -108,43 +129,18 @@ void loop()
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
-    displayMessage("state:", "left");    
     motorsWrite(0.8, 0.1, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
-    displayMessage("state:", "right");    
     motorsWrite(0.1, 0.8, 0, 0);
   } 
 
   // Stop
   else
   {
-    displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
   }
-}
-
-
-//FUNCTIONS
-
-void motorsWrite(float m1, float m2, float m3, float m4) {
-  ledcWrite(Motor_F1, m1 * 255);
-  ledcWrite(Motor_F2, m2 * 255);
-  ledcWrite(Motor_B1, m3 * 255);
-  ledcWrite(Motor_B2, m4 * 255);
-}
-
-
-void displayMessage(String title, String message)
-{
-  display.clearDisplay();               // Clear the OLED display
-  display.setTextSize(1);              // Set text size
-  display.setCursor(0, 0);             // Set cursor position
-  display.println(title);              // Print title
-  display.setCursor(0, 10);           // Move cursor to next line
-  display.println(message);           // Print the message
-  display.display();                   // Update the display
 }

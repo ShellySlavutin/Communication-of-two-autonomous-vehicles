@@ -24,7 +24,7 @@
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
 
-//Motors pins
+// Motors pins
 #define Motor_B1 12 
 #define Motor_F1 13 
 #define Motor_B2 4  
