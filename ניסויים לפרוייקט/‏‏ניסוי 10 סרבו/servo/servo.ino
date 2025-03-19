@@ -31,6 +31,9 @@ Servo ultrasonicServo;
 #define PWM_CHANNEL_B2 2
 #define PWM_CHANNEL_F2 3
 
+float speed = 0.5;
+float distance;
+
 void setup() 
 {
   pinMode(triger_Pin, OUTPUT);
@@ -51,18 +54,76 @@ void setup()
 
 void loop() 
 {
-  ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
+  moveAccordingToStrip();
+  /*ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
   distance = calculateDistance();
+
   if (distance < MIN_DISTANCE)
   {
+    stopMotors();
     // There is an obstecle forward, check other 
     ultrasonicServo.write(145);  // Rotate the servo to the right
     distance = calculateDistance();
 
-    ultrasonicServo.write(35);  // Rotate the servo to the left
-    distance = calculateDistance();
+    if(distance < MIN_DISTANCE)
+    {
+       rightTurn();
+    }
+
+    else 
+    {
+      ultrasonicServo.write(35);  // Rotate the servo to the left
+      distance = calculateDistance();
+    
+      if(distance < MIN_DISTANCE)
+      {
+        leftTurn();
+      }
+
+      else
+      {
+        moveAccordingToStrip();
+      }
+
+    }
   }
 
+  else
+  {
+    moveAccordingToStrip();
+  }
+*/
+  delay(100);
+
+}
+
+void rightTurn()
+{
+  motorsWrite(0,1,0,0);
+  if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
+  {  
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+  }  
+}
+
+void leftTurn()
+{
+    motorsWrite(1,0,0,0);
+    if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+    {  
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+    }
+}
+
+void stopMotors()
+{
+  // stooping the motors is the same as setting the pwm to 0 which is what we did here
+  speed = 0;
+  ledcWriteChannel(PWM_CHANNEL_F1, speed*255);
+  ledcWriteChannel(PWM_CHANNEL_F2, speed*255);
+
+  ledcWriteChannel(PWM_CHANNEL_B1, 0);
+  ledcWriteChannel(PWM_CHANNEL_B2, 0);
 }
 
 float calculateDistance()
@@ -105,25 +166,49 @@ void moveAccordingToStrip()
    }
   } 
 
+  else if(digitalRead(STRIP_SENSOR_4) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
+  {
+     stopMotors();
+     ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
+     distance = calculateDistance();
+
+     if (distance < MIN_DISTANCE)
+     {
+       motorsWrite(1,0,0,0);
+       if(digitalRead(STRIP_SENSOR_4))
+       {
+          motorsWrite(1,0,0,0);
+          if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+          {  
+            while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+          }
+       }
+     }
+
+     else
+     {
+        motorsWrite(0.4, 0.4, 0, 0);
+     }
+  }
+       
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
   else if(digitalRead(STRIP_SENSOR_4))
   {
-    motorsWrite(1,0,0,0);
-    if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
-    {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
-    }
-
+       motorsWrite(1,0,0,0);
+       if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+       {  
+         while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+       }
   }
 
   // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
   else if(digitalRead(STRIP_SENSOR_1))
   {
-    motorsWrite(0,1,0,0);
-    if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
-    {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
-    }  
+      motorsWrite(0,1,0,0);
+      if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
+      {  
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      } 
   }
 
   // Minor correcting to the left, when the car moves a bit, when there are twists.
@@ -134,6 +219,11 @@ void moveAccordingToStrip()
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
+  {
+    motorsWrite(0.1, 0.8, 0, 0);
+  } 
+
+  else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
     motorsWrite(0.1, 0.8, 0, 0);
   } 
