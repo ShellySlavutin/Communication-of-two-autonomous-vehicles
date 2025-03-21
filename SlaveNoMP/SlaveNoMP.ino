@@ -4,7 +4,6 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <Adafruit_NeoPixel.h>
-#include "DFRobotDFPlayerMini.h" 
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -40,14 +39,6 @@
 
 #define LDR 34
 
-#define RECORDING_TIME 2000
-
-HardwareSerial mp3Serial(1);  //  Defines UART1 for communicating with DFPlayer Mini
-DFRobotDFPlayerMini mp3;      // Create an object to control mp3
-
-bool flagLDR = true; 
-bool flagMSG = true;
-
 float speed = 0.5;
 
 String receivedMsg = " ";
@@ -62,7 +53,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 bool isConnected = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
 const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
-/*
+
 void headLights(bool isStopped)
 {
   NeoPixel.clear();
@@ -72,8 +63,8 @@ void headLights(bool isStopped)
     NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
     NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
     NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
-    NeoPixel.setPixelColor(4, NeoPixel.Color(128, 0, 0));  
-    NeoPixel.setPixelColor(5, NeoPixel.Color(128, 0, 0));  
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
     NeoPixel.show();
   }
   else if (digitalRead(LDR) == HIGH && isStopped == true)
@@ -89,28 +80,6 @@ void headLights(bool isStopped)
   }
 }
 
-void dayNightMode()
-{
-  if ((digitalRead(LDR) == LOW))
-  {
-    if(flagLDR)
-    {
-      mp3.play(2);// Play the second MP3 file (0002.mp3)
-      delay(2000);
-      flagLDR = false;
-    }
-  }
-
-  else
-  {
-    if(flagLDR)
-    {
-      mp3.play(3);// Play the third MP3 file (0003.mp3)
-      delay(2000);
-      flagLDR = false;
-    }
-  }
-}
 
 void backupStop() 
 {
@@ -120,15 +89,14 @@ void backupStop()
   if (rawValue1 == HIGH && rawValue2 == HIGH) 
   {
     moveAccordingToStrip();
-    //moveForward(false);
   } 
   else 
   {
-    stopMotors(false);
+    stopMotors();
   }
 
 }
-*/
+
 void displayMessage(String title, String message)
 {
   display.clearDisplay();
@@ -139,90 +107,31 @@ void displayMessage(String title, String message)
   display.println(message);
   display.display();
 }
-/*
-void stopMotors(bool flagMSG)
+
+void stopMotors()
 {
   speed = 0;
   ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
-  
-  if (flagMSG) 
-  {
-    mp3.play(6);
-    delay(2000); 
-  }
 
 }
 
-void moveForward(bool flagMSG)
+void moveForward()
 {
   speed = 0.5;
   ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
   ledcWriteChannel(PWM_CHANNEL_B1, 0);
   ledcWriteChannel(PWM_CHANNEL_B2, 0);
-
-  if (flagMSG) 
-  {
-    mp3.play(7); 
-    delay(2000);
-  }
-
 }
-*/
+
 void motorsWrite(float m1, float m2, float m3, float m4) {
   ledcWrite(Motor_F1, m1 * 255);
   ledcWrite(Motor_F2, m2 * 255);
   ledcWrite(Motor_B1, m3 * 255);
   ledcWrite(Motor_B2, m4 * 255);
-}
-
-void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
-{
-  //flagBS = false; // As long as there is connection keep the BS flag off
-  isConnected = true;
-  lastReceivedTime = millis();
-
-  char receivedMsg[len + 1];
-  memcpy(receivedMsg, incomingData, len);
-  receivedMsg[len] = '\0';
-
-  /*if (strcmp(receivedMsg, lastReceivedMsg) != 0) // Check if the message changed
-  {
-    strcpy(lastReceivedMsg, receivedMsg); // Update last received message
-    flagMSG = true; // Reset the flag since the message has changed
-  }*/
-
-  if (strcmp(receivedMsg, "Stop") == 0)
-  {
-    displayMessage("Received:", receivedMsg);
-    //stopMotors(flagMSG);
-    //flagMSG = false;
-    //headLights(true);
-    const char *message = "Stop received";
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-
-  }
-
-  else if (strcmp(receivedMsg, "Start") == 0)
-  {
-    displayMessage("Received:", receivedMsg);
-    //moveForward(flagMSG);
-    moveAccordingToStrip();
-    //flagMSG = false;
-    //headLights(false);
-    const char *message = "Start received";
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-
-  }
-}
-
-
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
-{
-
 }
 
 void moveAccordingToStrip()
@@ -232,17 +141,25 @@ void moveAccordingToStrip()
   {
     motorsWrite(0.4, 0.4, 0, 0);
 
-  // Extreme correcting to the left at the start, when the middle sensors see the line
-   if(digitalRead(STRIP_SENSOR_4))
-   {
-    motorsWrite(1,0,0,0);
-   }
+    // Extreme correcting to the left at the start, when the middle sensors see the line
+    if(digitalRead(STRIP_SENSOR_4))
+    {
+      motorsWrite(1,0,0,0);
+      if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+      {  
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      }
+    }
 
-   // Extreme correcting to the right at the start, when the middle sensors see the line
-   else if(digitalRead(STRIP_SENSOR_1))
-   {
-    motorsWrite(0,1,0,0);
-   }
+    // Extreme correcting to the right at the start, when the middle sensors see the line
+    if(digitalRead(STRIP_SENSOR_1))
+    {
+      motorsWrite(0,1,0,0);
+      if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
+      {  
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      } 
+    }
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
@@ -283,6 +200,43 @@ void moveAccordingToStrip()
   {
     motorsWrite(0, 0, 0, 0);
   }
+}
+
+void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
+{
+  //flagBS = false; // As long as there is connection keep the BS flag off
+  isConnected = true;
+  lastReceivedTime = millis();
+
+  char receivedMsg[len + 1];
+  memcpy(receivedMsg, incomingData, len);
+  receivedMsg[len] = '\0';
+
+  if (strcmp(receivedMsg, "Stop") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    stopMotors();
+    headLights(true);
+    const char *message = "Stop received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+
+  }
+
+  else if (strcmp(receivedMsg, "Start") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    moveAccordingToStrip();
+    headLights(false);
+    const char *message = "Start received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+
+  }
+}
+
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+
 }
 
 void setup()
@@ -330,19 +284,10 @@ void setup()
   pinMode(LDR, INPUT);
   pinMode(IR_SENSOR1_PIN, INPUT);
   pinMode(IR_SENSOR2_PIN, INPUT);
-
-  // Start Serial communication with DFPlayer Mini
-  mp3Serial.begin(9600, SERIAL_8N1, 16, 17);  //rx=16, tx=17
-
-  mp3.begin(mp3Serial); // Initialize DFPlayer Mini
-  mp3.volume(30); // Set volume to 30
 }
 
 void loop()
-{
-  /*
-  dayNightMode();
-  
+{  
   // Check for connection timeout
   if (millis() - lastReceivedTime > TIMEOUT)
   {
@@ -354,5 +299,4 @@ void loop()
   {
     backupStop();
   }
-  */
 }
