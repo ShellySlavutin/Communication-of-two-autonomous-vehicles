@@ -147,7 +147,7 @@ void moveAccordingToStrip()
       motorsWrite(1,0,0,0);
       if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
       {  
-        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+        while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (!digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
       }
     }
 
@@ -157,7 +157,7 @@ void moveAccordingToStrip()
       motorsWrite(0,1,0,0);
       if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
       {  
-        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+        while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
       } 
     }
   } 
@@ -168,7 +168,7 @@ void moveAccordingToStrip()
     motorsWrite(1,0,0,0);
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (!digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
     }
 
   }
@@ -179,7 +179,7 @@ void moveAccordingToStrip()
     motorsWrite(0,1,0,0);
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
     }  
   }
 
