@@ -8,17 +8,17 @@
 #define OLED_RESET -1 
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define STRIPE_SENSOR_1 34
-#define STRIPE_SENSOR_2 39
-#define STRIPE_SENSOR_3 15
-#define STRIPE_SENSOR_4 5
+#define STRIP_SENSOR_1 32
+#define STRIP_SENSOR_2 39
+#define STRIP_SENSOR_3 15
+#define STRIP_SENSOR_4 5
 
 void setup()
 {
-  pinMode(STRIPE_SENSOR_1, INPUT);
-  pinMode(STRIPE_SENSOR_2, INPUT);
-  pinMode(STRIPE_SENSOR_3, INPUT);
-  pinMode(STRIPE_SENSOR_4, INPUT);
+  pinMode(STRIP_SENSOR_1, INPUT);
+  pinMode(STRIP_SENSOR_2, INPUT);
+  pinMode(STRIP_SENSOR_3, INPUT);
+  pinMode(STRIP_SENSOR_4, INPUT);
 
   display.begin(i2c_Address,true); 
   display.clearDisplay();
@@ -28,10 +28,10 @@ void setup()
 
 void loop()
 {
-    bool SENSOR1 = digitalRead(STRIPE_SENSOR_1);
-    bool SENSOR2 = digitalRead(STRIPE_SENSOR_2);
-    bool SENSOR3 = digitalRead(STRIPE_SENSOR_3);
-    bool SENSOR4 = digitalRead(STRIPE_SENSOR_4);
+    bool SENSOR1 = digitalRead(STRIP_SENSOR_1);
+    bool SENSOR2 = digitalRead(STRIP_SENSOR_2);
+    bool SENSOR3 = digitalRead(STRIP_SENSOR_3);
+    bool SENSOR4 = digitalRead(STRIP_SENSOR_4);
 
     bool sensorActive = false;
 
