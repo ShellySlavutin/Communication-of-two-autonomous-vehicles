@@ -50,9 +50,7 @@
 
 float speed = 0.5; //speed for DC motors
 
-bool flagOB = true; 
 bool flagLDR = true; 
-bool flagMSG = true;
 
 char lastReceivedMsg[20] = ""; // Stores the last received message
 

@@ -62,7 +62,6 @@ const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
 
 void headLights(bool isStopped)
 {
-  displayMessage("in", "headLights");
   NeoPixel.clear();
   if ((digitalRead(LDR) == LOW && isStopped == true) || (digitalRead(LDR) == LOW))
   {
