@@ -62,6 +62,7 @@ const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
 
 void headLights(bool isStopped)
 {
+  displayMessage("in", "headLights");
   NeoPixel.clear();
   if ((digitalRead(LDR) == LOW && isStopped == true) || (digitalRead(LDR) == LOW))
   {
@@ -83,6 +84,22 @@ void headLights(bool isStopped)
   {
     NeoPixel.clear();
     NeoPixel.show(); 
+  }
+}
+
+void headLightsNight()
+{
+  displayMessage("in", "headLightsNight");
+  NeoPixel.clear();
+  if (digitalRead(LDR) == LOW)
+  {
+    NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
+    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.show();
   }
 }
 
@@ -168,36 +185,28 @@ void moveAccordingToStrip()
   // Drive forward
   if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.4, 0.4, 0, 0);
+    motorsWrite(0.2, 0.2, 0, 0);
 
-    // Extreme correcting to the left at the start, when the middle sensors see the line
-    if(digitalRead(STRIP_SENSOR_4))
-    {
-      motorsWrite(1,0,0,0);
-      if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
-      {  
-        while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (!digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
-      }
-    }
+  // Extreme correcting to the left at the start, when the middle sensors see the line
+   if(digitalRead(STRIP_SENSOR_4))
+   {
+    motorsWrite(0.5,0,0,0);
+   }
 
-    // Extreme correcting to the right at the start, when the middle sensors see the line
-    if(digitalRead(STRIP_SENSOR_1))
-    {
-      motorsWrite(0,1,0,0);
-      if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
-      {  
-        while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
-      } 
-    }
+   // Extreme correcting to the right at the start, when the middle sensors see the line
+   else if(digitalRead(STRIP_SENSOR_1))
+   {
+    motorsWrite(0,0.5,0,0);
+   }
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
   else if(digitalRead(STRIP_SENSOR_4))
   {
-    motorsWrite(1,0,0,0);
+    motorsWrite(0.5,0,0,0);
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
-      while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (!digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
     }
 
   }
@@ -205,28 +214,29 @@ void moveAccordingToStrip()
   // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
   else if(digitalRead(STRIP_SENSOR_1))
   {
-    motorsWrite(0,1,0,0);
+    motorsWrite(0,0.5,0,0);
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
-      while((!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) || (digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))); // keep turning until it sees the line
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
     }  
   }
 
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.8, 0.1, 0, 0);
+    motorsWrite(0.5, 0.1, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
-    motorsWrite(0.1, 0.8, 0, 0);
+    motorsWrite(0.1, 0.5, 0, 0);
   } 
 
   // Stop
   else
   {
+    headLights(true);
     motorsWrite(0, 0, 0, 0);
   }
 }
@@ -323,6 +333,7 @@ void setup()
 void loop()
 {  
   dayNightMode();
+  headLightsNight();
 
   // Check for connection timeout
   if (millis() - lastReceivedTime > TIMEOUT)

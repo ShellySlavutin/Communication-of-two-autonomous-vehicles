@@ -224,25 +224,25 @@ void moveAccordingToStrip()
   // Drive forward
   if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.4, 0.4, 0, 0);
+    motorsWrite(0.2, 0.2, 0, 0);
 
   // Extreme correcting to the left at the start, when the middle sensors see the line
    if(digitalRead(STRIP_SENSOR_4))
    {
-    motorsWrite(1,0,0,0);
+    motorsWrite(0.5,0,0,0);
    }
 
    // Extreme correcting to the right at the start, when the middle sensors see the line
    else if(digitalRead(STRIP_SENSOR_1))
    {
-    motorsWrite(0,1,0,0);
+    motorsWrite(0,0.5,0,0);
    }
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
   else if(digitalRead(STRIP_SENSOR_4))
   {
-    motorsWrite(1,0,0,0);
+    motorsWrite(0.5,0,0,0);
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -253,7 +253,7 @@ void moveAccordingToStrip()
   // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
   else if(digitalRead(STRIP_SENSOR_1))
   {
-    motorsWrite(0,1,0,0);
+    motorsWrite(0,0.5,0,0);
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -263,13 +263,13 @@ void moveAccordingToStrip()
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.8, 0.1, 0, 0);
+    motorsWrite(0.5, 0.1, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
-    motorsWrite(0.1, 0.8, 0, 0);
+    motorsWrite(0.1, 0.5, 0, 0);
   } 
 
   // Stop
