@@ -55,7 +55,7 @@ void setup()
 void loop() 
 {
   moveAccordingToStrip();
-  /*ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
+  ultrasonicServo.write(90);  // Rotate the servo to 90 degrees, forward
   distance = calculateDistance();
 
   if (distance < MIN_DISTANCE)
@@ -92,7 +92,7 @@ void loop()
   {
     moveAccordingToStrip();
   }
-*/
+
   delay(100);
 
 }
