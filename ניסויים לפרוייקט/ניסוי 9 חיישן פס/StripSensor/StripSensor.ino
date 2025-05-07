@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <Adafruit_NeoPixel.h>
+#include "DFRobotDFPlayerMini.h"
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -14,7 +15,7 @@
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 32
+#define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
@@ -39,6 +40,14 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 #define PWM_CHANNEL_B2 2
 #define PWM_CHANNEL_F2 3
 
+// Ultrasonic Sensor Pins
+#define PIN_TRIG 32
+#define PIN_ECHO 33
+
+// Servo Settings
+#include <ESP32Servo.h>
+Servo servo;
+
 void setup() {
   // Initialize the display
   display.begin(i2c_Address,true); 
@@ -56,13 +65,77 @@ void setup() {
   ledcAttach(Motor_B1, Freq, Resolution);
   ledcAttach(Motor_B2, Freq, Resolution);
 
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+
   delay(1000);
 }
 
 void loop() 
 {
-  // Drive forward
-  if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
+  if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4)){
+    delay(200);
+    motorsWrite(0, 0, 0, 0);
+    delay(500);
+
+    display.setCursor(2,10);
+    display.print("stop");
+    display.display();
+
+    // Measure the distance at every angle
+    moveServo(0);
+    moveServo(0);
+    delay(500);
+
+    float disR = measureDis();
+    display.setCursor(2,20);
+    display.print("0 - " + String(disR));
+    display.display();
+    delay(500);
+
+    moveServo(90);
+    moveServo(90);
+    delay(500);
+    
+    float disF = measureDis();
+    display.setCursor(2,30);
+    display.print("90 - " + String(disF));
+    display.display();
+    delay(500);
+
+    moveServo(180);
+    moveServo(180);
+    delay(500);
+
+    float disL = measureDis();
+    display.setCursor(2,40);
+    display.print("180 - " + String(disL));
+    display.display();
+    delay(500);
+
+    moveServo(90);
+
+    // Determine the course
+    if((disF > disR) && (disF > disL)){
+      motorsWrite(0.7, 0.7, 0, 0);
+      delay(1000);
+    }
+    else if((disR > disF) && (disR > disL)){
+      motorsWrite(0,1,0,0);
+      delay(1000);
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
+      }
+    }
+    else if((disL > disF) && (disL > disR)){
+      motorsWrite(1,0,0,0);
+      delay(1000);
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
+      }
+    }
+  }
+
+  // If car is on course
+  else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
     motorsWrite(0.2, 0.2, 0, 0);
     displayMessage("state:", "foward");
@@ -147,4 +220,25 @@ void displayMessage(String title, String message)
   display.setCursor(0, 10);           // Move cursor to next line
   display.println(message);           // Print the message
   display.display();                   // Update the display
+}
+
+
+float measureDis()
+{
+  digitalWrite(PIN_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PIN_TRIG, LOW);
+  float Duration = pulseIn(PIN_ECHO, HIGH);
+  float distance = Duration / 58.0;
+
+  return distance;
+}
+
+void moveServo(int angle) {
+  servo.attach(18,500,2500);
+  servo.write(angle);
+  delay(500);
+  servo.detach();
 }
