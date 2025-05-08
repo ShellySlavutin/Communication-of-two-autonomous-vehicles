@@ -59,6 +59,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 bool isConnected = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
 const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
+char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
 void headLights(bool isStopped)
 {
@@ -137,7 +138,7 @@ void backupStop()
   } 
   else 
   {
-    stopMotors();
+    motorsWrite(0, 0, 0, 0);
   }
 
 }
@@ -153,25 +154,6 @@ void displayMessage(String title, String message)
   display.display();
 }
 
-void stopMotors()
-{
-  speed = 0;
-  ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
-  ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
-  ledcWriteChannel(PWM_CHANNEL_B1, 0);
-  ledcWriteChannel(PWM_CHANNEL_B2, 0);
-
-}
-
-void moveForward()
-{
-  speed = 0.5;
-  ledcWriteChannel(PWM_CHANNEL_F1, speed * 255);
-  ledcWriteChannel(PWM_CHANNEL_F2, speed * 255);
-  ledcWriteChannel(PWM_CHANNEL_B1, 0);
-  ledcWriteChannel(PWM_CHANNEL_B2, 0);
-}
-
 void motorsWrite(float m1, float m2, float m3, float m4) {
   ledcWrite(Motor_F1, m1 * 255);
   ledcWrite(Motor_F2, m2 * 255);
@@ -181,21 +163,44 @@ void motorsWrite(float m1, float m2, float m3, float m4) {
 
 void moveAccordingToStrip()
 {
-  // Drive forward
-  if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
+  if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
+  {
+    if (intersectionTurn == 'F')
+    {
+      motorsWrite(0.2, 0.2, 0, 0);
+      displayMessage("state:", "foward");
+    }
+    if (intersectionTurn == 'R')
+    {
+      motorsWrite(0,0.5,0,0);
+      delay(1000);
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+    }
+    if (intersectionTurn == 'L')
+    {
+      motorsWrite(0.5,0,0,0);
+      delay(1000);
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+    }
+  }
+
+  else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
     motorsWrite(0.2, 0.2, 0, 0);
+    displayMessage("state:", "foward");
 
   // Extreme correcting to the left at the start, when the middle sensors see the line
    if(digitalRead(STRIP_SENSOR_4))
    {
     motorsWrite(0.5,0,0,0);
+    displayMessage("state:", "extreme left");  
    }
 
    // Extreme correcting to the right at the start, when the middle sensors see the line
    else if(digitalRead(STRIP_SENSOR_1))
    {
     motorsWrite(0,0.5,0,0);
+    displayMessage("state:", "extreme right");   
    }
   } 
 
@@ -203,6 +208,7 @@ void moveAccordingToStrip()
   else if(digitalRead(STRIP_SENSOR_4))
   {
     motorsWrite(0.5,0,0,0);
+    displayMessage("state:", "extreme left");    
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -214,6 +220,7 @@ void moveAccordingToStrip()
   else if(digitalRead(STRIP_SENSOR_1))
   {
     motorsWrite(0,0.5,0,0);
+    displayMessage("state:", "extreme right");  
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -223,19 +230,21 @@ void moveAccordingToStrip()
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
+    displayMessage("state:", "left");    
     motorsWrite(0.5, 0.1, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
+    displayMessage("state:", "right");    
     motorsWrite(0.1, 0.5, 0, 0);
   } 
 
   // Stop
   else
   {
-    headLights(true);
+    displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
   }
 }
@@ -252,11 +261,38 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   if (strcmp(receivedMsg, "Stop") == 0)
   {
     displayMessage("Received:", receivedMsg);
-    stopMotors();
+    motorsWrite(0, 0, 0, 0);
     headLights(true);
     const char *message = "Stop received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
 
+  }
+
+  else if (strcmp(receivedMsg, "F") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    intersectionTurn = receivedMsg[0];
+
+    const char *message = "F received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+  }
+
+  else if (strcmp(receivedMsg, "R") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    intersectionTurn = receivedMsg[0];
+
+    const char *message = "R received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+  }
+
+  else if (strcmp(receivedMsg, "L") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    intersectionTurn = receivedMsg[0];
+
+    const char *message = "L received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
   else if (strcmp(receivedMsg, "Start") == 0)
