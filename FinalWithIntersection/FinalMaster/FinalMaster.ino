@@ -40,7 +40,7 @@ Servo servo;
 #define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 5
+#define STRIP_SENSOR_4 35
 
 //RGB pins
 #define BLUE_RGB_PIN 2
@@ -282,16 +282,33 @@ void loop()
   float distance = calculateDistance();
   headLights(distance);
 
-  const char *message = "Start";
-  esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+  /*
+  display.setCursor(2,10);
+  display.print(digitalRead(STRIP_SENSOR_1));
+  display.display();
+
+  display.setCursor(2,20);
+  display.print(digitalRead(STRIP_SENSOR_2));
+  display.display();
+
+  display.setCursor(2,30);
+  display.print(digitalRead(STRIP_SENSOR_3));
+  display.display();
+
+  display.setCursor(2,40);
+  display.print(digitalRead(STRIP_SENSOR_4));
+  display.display();*/
+
 
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
+    delay(200);
+
+    motorsWrite(0, 0, 0, 0);
+
     const char *message = "Stop";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
-    delay(200);
-    motorsWrite(0, 0, 0, 0);
     delay(500);
 
     display.setCursor(2,10);
@@ -333,16 +350,13 @@ void loop()
 
     // Determine the course
     if((disF > disR) && (disF > disL)){
-      // Forward
       const char *message = "F";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
       motorsWrite(0.2, 0.2, 0, 0);
       delay(1000);
     }
-
     else if((disR > disF) && (disR > disL)){
-      // Right
       const char *message = "R";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
@@ -351,9 +365,7 @@ void loop()
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
       }
     }
-
     else if((disL > disF) && (disL > disR)){
-      // Left
       const char *message = "L";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
@@ -362,28 +374,30 @@ void loop()
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
       }
     }
-
   }
 
   // If car is on course
   else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
+    const char *message = "Start";
+    esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
     motorsWrite(0.2, 0.2, 0, 0);
     displayMessage("state:", "foward");
 
   // Extreme correcting to the left at the start, when the middle sensors see the line
-  if(digitalRead(STRIP_SENSOR_4))
-  {
+   if(digitalRead(STRIP_SENSOR_4))
+   {
     motorsWrite(0.5,0,0,0);
     displayMessage("state:", "extreme left");  
-  }
+   }
 
-  // Extreme correcting to the right at the start, when the middle sensors see the line
-  else if(digitalRead(STRIP_SENSOR_1))
-  {
+   // Extreme correcting to the right at the start, when the middle sensors see the line
+   else if(digitalRead(STRIP_SENSOR_1))
+   {
     motorsWrite(0,0.5,0,0);
     displayMessage("state:", "extreme right");   
-  }
+   }
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
@@ -426,9 +440,10 @@ void loop()
   // Stop
   else
   {
+    const char *message = "Stop";
+    esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
     displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
   }
-  
-  delay(100);
 }

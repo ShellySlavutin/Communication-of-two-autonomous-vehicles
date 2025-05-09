@@ -89,7 +89,6 @@ void headLights(bool isStopped)
 
 void headLightsNight()
 {
-  displayMessage("in", "headLightsNight");
   NeoPixel.clear();
   if (digitalRead(LDR) == LOW)
   {
