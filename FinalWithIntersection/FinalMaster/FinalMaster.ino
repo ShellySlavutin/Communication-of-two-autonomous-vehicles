@@ -302,7 +302,14 @@ void loop()
 
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
+    bool Tintersection = true;
     delay(200);
+
+    if (!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))
+    {
+      // There is no line, do not enter the forward if
+      Tintersection = false;
+    }
 
     motorsWrite(0, 0, 0, 0);
 
@@ -349,7 +356,7 @@ void loop()
     moveServo(90);
 
     // Determine the course
-    if((disF > disR) && (disF > disL)){
+    if((disF > disR) && (disF > disL) && Tintersection){
       const char *message = "F";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 

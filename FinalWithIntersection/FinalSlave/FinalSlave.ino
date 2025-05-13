@@ -32,7 +32,7 @@
 #define STRIP_SENSOR_1 32
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 5
+#define STRIP_SENSOR_4 33
 
 // Define the analog pin connected to the IR sensor
 #define IR_SENSOR1_PIN 35 
@@ -58,7 +58,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 // Connection tracking
 bool isConnected = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
-const unsigned long TIMEOUT = 1000; // Timeout period in milliseconds
+const unsigned long TIMEOUT = 10000; // Timeout period in milliseconds
 char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
 void headLights(bool isStopped)
