@@ -50,6 +50,11 @@ Servo servo;
 #define NEOPIXEL_PIN 5 
 #define NUM_PIXELS 6
 
+// Blinker Settings
+#define interval 300
+unsigned long previousT = 0;
+bool blinkState = 0;
+
 #define LDR 34 //LDR pins
 
 float speed = 0.5; //speed for DC motors
@@ -103,6 +108,35 @@ void headLights(float distance)
     NeoPixel.show(); 
   }
 
+}
+
+void leds(int i, int f, int r, int g, int b){
+  for (i; i <= f; i++) {
+    NeoPixel.setPixelColor(i, r, g, b);
+  }
+  NeoPixel.show();
+}
+
+void blinker(char dir){
+  unsigned long currentT = millis();
+  if(currentT - previousT >= interval){
+    previousT = currentT;
+    if(!blinkState){
+      blinkState = 1;
+      switch(dir){
+        case 'R':
+          NeoPixel.setPixelColor(3,100,50,0);
+          break;
+        case 'L':
+          NeoPixel.setPixelColor(2,100,50,0);
+          break;
+      }
+      NeoPixel.show();
+    }else{
+      leds(2,3,0,0,0);
+      blinkState = 0;
+    }
+  }
 }
 
 
@@ -303,7 +337,8 @@ void loop()
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
     bool Tintersection = true;
-    delay(200);
+    motorsWrite(0.2, 0.2, 0, 0);
+    delay(500);
 
     if (!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))
     {
@@ -356,7 +391,8 @@ void loop()
     moveServo(90);
 
     // Determine the course
-    if((disF > disR) && (disF > disL) && Tintersection){
+    if((disF > disR) && (disF > disL) && Tintersection)
+    {
       const char *message = "F";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 

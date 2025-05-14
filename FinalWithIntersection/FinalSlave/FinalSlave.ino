@@ -167,7 +167,6 @@ void moveAccordingToStrip()
     if (intersectionTurn == 'F')
     {
       motorsWrite(0.2, 0.2, 0, 0);
-      displayMessage("state:", "foward");
     }
     if (intersectionTurn == 'R')
     {
@@ -186,20 +185,17 @@ void moveAccordingToStrip()
   else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
     motorsWrite(0.2, 0.2, 0, 0);
-    displayMessage("state:", "foward");
 
   // Extreme correcting to the left at the start, when the middle sensors see the line
    if(digitalRead(STRIP_SENSOR_4))
    {
     motorsWrite(0.5,0,0,0);
-    displayMessage("state:", "extreme left");  
    }
 
    // Extreme correcting to the right at the start, when the middle sensors see the line
    else if(digitalRead(STRIP_SENSOR_1))
    {
     motorsWrite(0,0.5,0,0);
-    displayMessage("state:", "extreme right");   
    }
   } 
 
@@ -207,7 +203,6 @@ void moveAccordingToStrip()
   else if(digitalRead(STRIP_SENSOR_4))
   {
     motorsWrite(0.5,0,0,0);
-    displayMessage("state:", "extreme left");    
     if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -219,7 +214,6 @@ void moveAccordingToStrip()
   else if(digitalRead(STRIP_SENSOR_1))
   {
     motorsWrite(0,0.5,0,0);
-    displayMessage("state:", "extreme right");  
     if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
     {  
       while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
@@ -229,21 +223,18 @@ void moveAccordingToStrip()
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
-    displayMessage("state:", "left");    
     motorsWrite(0.5, 0.1, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
-    displayMessage("state:", "right");    
     motorsWrite(0.1, 0.5, 0, 0);
   } 
 
   // Stop
   else
   {
-    displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
   }
 }
