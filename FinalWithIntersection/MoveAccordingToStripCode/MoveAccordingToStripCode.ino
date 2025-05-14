@@ -21,10 +21,10 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 5
 */
-#define STRIP_SENSOR_1 32
+#define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 5
+#define STRIP_SENSOR_4 35
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -45,6 +45,13 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 #define PWM_CHANNEL_F1 1
 #define PWM_CHANNEL_B2 2
 #define PWM_CHANNEL_F2 3
+
+#define NEOPIXEL_PIN 5 
+#define NUM_PIXELS 6
+
+#define LDR 34 //LDR pins
+
+Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800); // Creating an object for the neoPixel
 
 
 void setup() {
@@ -132,6 +139,11 @@ void loop()
   {
     displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
+
+    // Light up brake lights manually
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.show();
   }
 }
 

@@ -38,6 +38,11 @@
 #define IR_SENSOR1_PIN 35 
 #define IR_SENSOR2_PIN 36
 
+// Blinker Settings
+#define interval 300
+unsigned long previousT = 0;
+bool blinkState = 0;
+
 #define LDR 34
 
 float speed = 0.5;
@@ -102,6 +107,35 @@ void headLightsNight()
   }
 }
 
+void leds(int i, int f, int r, int g, int b){
+  for (i; i <= f; i++) {
+    NeoPixel.setPixelColor(i, r, g, b);
+  }
+  NeoPixel.show();
+}
+
+void blinker(char dir){
+  unsigned long currentT = millis();
+  if(currentT - previousT >= interval){
+    previousT = currentT;
+    if(!blinkState){
+      blinkState = 1;
+      switch(dir){
+        case 'R':
+          NeoPixel.setPixelColor(3,100,50,0);
+          break;
+        case 'L':
+          NeoPixel.setPixelColor(2,100,50,0);
+          break;
+      }
+      NeoPixel.show();
+    }else{
+      leds(2,3,0,0,0);
+      blinkState = 0;
+    }
+  }
+}
+
 void dayNightMode()
 {
   if ((digitalRead(LDR) == LOW))
@@ -137,6 +171,7 @@ void backupStop()
   } 
   else 
   {
+    headLights(true);
     motorsWrite(0, 0, 0, 0);
   }
 
@@ -172,13 +207,15 @@ void moveAccordingToStrip()
     {
       motorsWrite(0,0.5,0,0);
       delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
+      }
     }
     if (intersectionTurn == 'L')
     {
       motorsWrite(0.5,0,0,0);
       delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
+      }
     }
   }
 
@@ -235,6 +272,8 @@ void moveAccordingToStrip()
   // Stop
   else
   {
+    headLights(true);
+
     motorsWrite(0, 0, 0, 0);
   }
 }

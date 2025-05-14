@@ -50,11 +50,6 @@ Servo servo;
 #define NEOPIXEL_PIN 5 
 #define NUM_PIXELS 6
 
-// Blinker Settings
-#define interval 300
-unsigned long previousT = 0;
-bool blinkState = 0;
-
 #define LDR 34 //LDR pins
 
 float speed = 0.5; //speed for DC motors
@@ -108,35 +103,6 @@ void headLights(float distance)
     NeoPixel.show(); 
   }
 
-}
-
-void leds(int i, int f, int r, int g, int b){
-  for (i; i <= f; i++) {
-    NeoPixel.setPixelColor(i, r, g, b);
-  }
-  NeoPixel.show();
-}
-
-void blinker(char dir){
-  unsigned long currentT = millis();
-  if(currentT - previousT >= interval){
-    previousT = currentT;
-    if(!blinkState){
-      blinkState = 1;
-      switch(dir){
-        case 'R':
-          NeoPixel.setPixelColor(3,100,50,0);
-          break;
-        case 'L':
-          NeoPixel.setPixelColor(2,100,50,0);
-          break;
-      }
-      NeoPixel.show();
-    }else{
-      leds(2,3,0,0,0);
-      blinkState = 0;
-    }
-  }
 }
 
 
@@ -314,179 +280,187 @@ void loop()
   dayNightMode();
 
   float distance = calculateDistance();
-  headLights(distance);
 
-  /*
-  display.setCursor(2,10);
-  display.print(digitalRead(STRIP_SENSOR_1));
-  display.display();
-
-  display.setCursor(2,20);
-  display.print(digitalRead(STRIP_SENSOR_2));
-  display.display();
-
-  display.setCursor(2,30);
-  display.print(digitalRead(STRIP_SENSOR_3));
-  display.display();
-
-  display.setCursor(2,40);
-  display.print(digitalRead(STRIP_SENSOR_4));
-  display.display();*/
-
-
-  if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
+  if (distance < MIN_DISTANCE)
   {
-    bool Tintersection = true;
-    motorsWrite(0.2, 0.2, 0, 0);
-    delay(500);
-
-    if (!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))
-    {
-      // There is no line, do not enter the forward if
-      Tintersection = false;
-    }
-
-    motorsWrite(0, 0, 0, 0);
-
     const char *message = "Stop";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
-    delay(500);
+    displayMessage("state:", "stop distance");    
+    motorsWrite(0, 0, 0, 0);
 
-    display.setCursor(2,10);
-    display.print("stop");
-    display.display();
+    // Light up brake lights manually
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.show();
+  }
 
-    // Measure the distance at every angle
-    moveServo(0);
-    moveServo(0);
-    delay(500);
-
-    float disR = calculateDistance();
-    display.setCursor(2,20);
-    display.print("0 - " + String(disR));
-    display.display();
-    delay(500);
-
-    moveServo(90);
-    moveServo(90);
-    delay(500);
-    
-    float disF = calculateDistance();
-    display.setCursor(2,30);
-    display.print("90 - " + String(disF));
-    display.display();
-    delay(500);
-
-    moveServo(180);
-    moveServo(180);
-    delay(500);
-
-    float disL = calculateDistance();
-    display.setCursor(2,40);
-    display.print("180 - " + String(disL));
-    display.display();
-    delay(500);
-
-    moveServo(90);
-
-    // Determine the course
-    if((disF > disR) && (disF > disL) && Tintersection)
+  else
+  {
+    if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
     {
-      const char *message = "F";
+      bool Tintersection = true;
+
+      motorsWrite(0.2, 0.2, 0, 0);
+      delay(400);
+
+      if (!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3))
+      {
+        // There is no line, do not enter the forward if
+        Tintersection = false;
+      }
+
+      motorsWrite(0, 0, 0, 0);
+
+      const char *message = "Stop";
+      esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+      delay(500);
+
+      display.setCursor(2,10);
+      display.print("stop");
+      display.display();
+
+      // Measure the distance at every angle
+      moveServo(0);
+      moveServo(0);
+      delay(500);
+
+      float disR = calculateDistance();
+      display.setCursor(2,20);
+      display.print("0 - " + String(disR));
+      display.display();
+      delay(500);
+
+      moveServo(90);
+      moveServo(90);
+      delay(500);
+      
+      float disF = calculateDistance();
+      display.setCursor(2,30);
+      display.print("90 - " + String(disF));
+      display.display();
+      delay(500);
+
+      moveServo(180);
+      moveServo(180);
+      delay(500);
+
+      float disL = calculateDistance();
+      display.setCursor(2,40);
+      display.print("180 - " + String(disL));
+      display.display();
+      delay(500);
+
+      moveServo(90);
+
+      // Determine the course
+      if((disF > disR) && (disF > disL) && Tintersection)
+      {
+        const char *message = "F";
+        esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+        motorsWrite(0.2, 0.2, 0, 0);
+        delay(1000);
+      }
+      else if((disR > disF) && (disR > disL))
+      {
+        const char *message = "R";
+        esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+        motorsWrite(0,0.5,0,0);
+        delay(1000);
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3));
+      }
+      else if((disL > disF) && (disL > disR))
+      {
+        const char *message = "L";
+        esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+        motorsWrite(0.5,0,0,0);
+        delay(1000);
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3));
+      }
+    }
+
+    NeoPixel.setPixelColor(4, NeoPixel.Color(0, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(0, 0, 0));  
+    NeoPixel.show();
+
+    // If car is on course
+    else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
+    {
+      const char *message = "Start";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
       motorsWrite(0.2, 0.2, 0, 0);
-      delay(1000);
-    }
-    else if((disR > disF) && (disR > disL)){
-      const char *message = "R";
-      esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+      displayMessage("state:", "foward");
 
-      motorsWrite(0,0.5,0,0);
-      delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
-      }
-    }
-    else if((disL > disF) && (disL > disR)){
-      const char *message = "L";
-      esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
-
+    // Extreme correcting to the left at the start, when the middle sensors see the line
+    if(digitalRead(STRIP_SENSOR_4))
+    {
       motorsWrite(0.5,0,0,0);
-      delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){
+      displayMessage("state:", "extreme left");  
+    }
+
+    // Extreme correcting to the right at the start, when the middle sensors see the line
+    else if(digitalRead(STRIP_SENSOR_1))
+    {
+      motorsWrite(0,0.5,0,0);
+      displayMessage("state:", "extreme right");   
+    }
+    } 
+
+    // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
+    else if(digitalRead(STRIP_SENSOR_4))
+    {
+      motorsWrite(0.5,0,0,0);
+      displayMessage("state:", "extreme left");    
+      if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
+      {  
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
       }
-    }
-  }
 
-  // If car is on course
-  else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
-  {
-    const char *message = "Start";
-    esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
-
-    motorsWrite(0.2, 0.2, 0, 0);
-    displayMessage("state:", "foward");
-
-  // Extreme correcting to the left at the start, when the middle sensors see the line
-   if(digitalRead(STRIP_SENSOR_4))
-   {
-    motorsWrite(0.5,0,0,0);
-    displayMessage("state:", "extreme left");  
-   }
-
-   // Extreme correcting to the right at the start, when the middle sensors see the line
-   else if(digitalRead(STRIP_SENSOR_1))
-   {
-    motorsWrite(0,0.5,0,0);
-    displayMessage("state:", "extreme right");   
-   }
-  } 
-
-  // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
-  else if(digitalRead(STRIP_SENSOR_4))
-  {
-    motorsWrite(0.5,0,0,0);
-    displayMessage("state:", "extreme left");    
-    if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
-    {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
     }
 
-  }
+    // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
+    else if(digitalRead(STRIP_SENSOR_1))
+    {
+      motorsWrite(0,0.5,0,0);
+      displayMessage("state:", "extreme right");  
+      if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
+      {  
+        while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+      }  
+    }
 
-  // Extreme correcting to the right in the end, when only STRIP_SENSOR_1 is able to see the line
-  else if(digitalRead(STRIP_SENSOR_1))
-  {
-    motorsWrite(0,0.5,0,0);
-    displayMessage("state:", "extreme right");  
-    if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
-    {  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
-    }  
-  }
+    // Minor correcting to the left, when the car moves a bit, when there are twists.
+    else if (digitalRead(STRIP_SENSOR_3))
+    {
+      displayMessage("state:", "left");    
+      motorsWrite(0.5, 0.1, 0, 0);
+    } 
 
-  // Minor correcting to the left, when the car moves a bit, when there are twists.
-  else if (digitalRead(STRIP_SENSOR_3))
-  {
-    displayMessage("state:", "left");    
-    motorsWrite(0.5, 0.1, 0, 0);
-  } 
+    // Minor correcting to the right, when the car moves a bit, when there are twists.
+    else if (digitalRead(STRIP_SENSOR_2))
+    {
+      displayMessage("state:", "right");    
+      motorsWrite(0.1, 0.5, 0, 0);
+    } 
 
-  // Minor correcting to the right, when the car moves a bit, when there are twists.
-  else if (digitalRead(STRIP_SENSOR_2))
-  {
-    displayMessage("state:", "right");    
-    motorsWrite(0.1, 0.5, 0, 0);
-  } 
+    // Stop
+    else
+    {
+      const char *message = "Stop";
+      esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
-  // Stop
-  else
-  {
-    const char *message = "Stop";
-    esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+      displayMessage("state:", "stop");    
+      motorsWrite(0, 0, 0, 0);
 
-    displayMessage("state:", "stop");    
-    motorsWrite(0, 0, 0, 0);
+      // Light up brake lights manually
+      NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+      NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+      NeoPixel.show();
+    }
   }
 }
