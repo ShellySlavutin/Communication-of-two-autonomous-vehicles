@@ -19,21 +19,16 @@ void loop()
   // Read the raw digital value from the IR sensor
   int rawValue1 = digitalRead(IR_SENSOR1_PIN);
   int rawValue2 = digitalRead(IR_SENSOR2_PIN);
-  float avgRawValue = (rawValue1+rawValue2) / 2;
 
-  if (avgRawValue == HIGH)
-  {
-    Serial.print("Raw Value: ");
-    Serial.print(avgRawValue);  
-    Serial.print("\tThere is no object\n");
-  }
+    Serial.print("Raw Value1:");
+    Serial.println(rawValue1);  
 
-  else if (avgRawValue == LOW)
-  {
-    Serial.print("Raw Value: ");
-    Serial.print(avgRawValue);  
-    Serial.print("\tThere is an object\n");
-  }
+
+    Serial.print("Raw Value2:");
+    Serial.println(rawValue2);  
+
+
+
 
   // Delay to reduce noise (adjust as needed)
   delay(100);
