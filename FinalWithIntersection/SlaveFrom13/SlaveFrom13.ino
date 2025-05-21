@@ -34,13 +34,14 @@
 #define STRIP_SENSOR_3 15
 #define STRIP_SENSOR_4 33
 
+
 // Define the analog pin connected to the IR sensor
-#define IR_SENSOR1_PIN 35 
-#define IR_SENSOR2_PIN 36
+//#define IR_SENSOR1_PIN 35 
+//#define IR_SENSOR2_PIN 36
 
 #define LDR 34
 
-float speed = 0.5;
+float speed = 0.7;
 
 String receivedMsg = " ";
 char lastReceivedMsg[20] = ""; // Stores the last received message
@@ -57,6 +58,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 
 // Connection tracking
 bool isConnected = false;
+bool isMasterStopped = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
 
 const unsigned long TIMEOUT = 10000; // Timeout period in milliseconds
@@ -128,7 +130,7 @@ void dayNightMode()
 }
 
 
-void backupStop() 
+/*void backupStop() 
 {
   int rawValue1 = digitalRead(IR_SENSOR1_PIN);
   int rawValue2 = digitalRead(IR_SENSOR2_PIN);
@@ -142,7 +144,7 @@ void backupStop()
     motorsWrite(0, 0, 0, 0);
   }
 
-}
+}*/
 
 void displayMessage(String title, String message)
 {
@@ -164,45 +166,44 @@ void motorsWrite(float m1, float m2, float m3, float m4) {
 
 void moveAccordingToStrip()
 {
+  
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
+    displayMessage("state:", "intersection");
+
     if (intersectionTurn == 'F')
     {
-      motorsWrite(0.5, 0.5, 0, 0);
-      displayMessage("state:", "foward");
+      motorsWrite(0.7, 0.7, 0, 0);
+      displayMessage("state:", "foward1");
     }
     if (intersectionTurn == 'R')
     {
       motorsWrite(0,0.8,0,0);
       delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+      displayMessage("state:", "extreme right1");
+      unsigned long startTime = millis();
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+      {
+        if (millis() - startTime > 2000) break; // max wait 2s
+      }
     }
     if (intersectionTurn == 'L')
     {
-      motorsWrite(0.5,0,0,0);
+      motorsWrite(0.8,0,0,0);
       delay(1000);
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)){}
+      displayMessage("state:", "extreme left1");
+      unsigned long startTime = millis();
+      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+      {
+        if (millis() - startTime > 2000) break; // max wait 2s
+      }
     }
   }
 
   else if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
-        motorsWrite(0.5, 0.5, 0, 0);
-        displayMessage("state:", "foward");
-
-      // Extreme correcting to the left at the start, when the middle sensors see the line
-      if(digitalRead(STRIP_SENSOR_4))
-      {
-        motorsWrite(0.8,0,0,0);
-        displayMessage("state:", "extreme left");  
-      }
-
-      // Extreme correcting to the right at the start, when the middle sensors see the line
-      else if(digitalRead(STRIP_SENSOR_1))
-      {
-        motorsWrite(0,0.8,0,0);
-        displayMessage("state:", "extreme right");   
-      }
+    motorsWrite(0.7, 0.7, 0, 0);
+    displayMessage("state:", "foward");
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
@@ -210,10 +211,11 @@ void moveAccordingToStrip()
   {
     motorsWrite(0.8,0,0,0);
     displayMessage("state:", "extreme left");    
-    //if (!digitalRead(STRIP_SENSOR_4)) // A case in which the turn is wide and no sensor can see the line
-    //{  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
-    //}
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme left loop");
+      motorsWrite(0.8,0,0,0);
+    }
 
   }
 
@@ -222,24 +224,26 @@ void moveAccordingToStrip()
   {
     motorsWrite(0,0.8,0,0);
     displayMessage("state:", "extreme right");  
-    //if (!digitalRead(STRIP_SENSOR_1)) // A case in which the turn is wide and no sensor can see the line
-    //{  
-      while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
-    //}  
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme right loop");
+      motorsWrite(0,0.8,0,0);
+    }
+     
   }
 
   // Minor correcting to the left, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_3))
   {
     displayMessage("state:", "left");    
-    motorsWrite(0.8, 0.4, 0, 0);
+    motorsWrite(0.8, 0.5, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
     displayMessage("state:", "right");    
-    motorsWrite(0.4, 0.8, 0, 0);
+    motorsWrite(0.5, 0.8, 0, 0);
   } 
 
   // Stop
@@ -247,7 +251,13 @@ void moveAccordingToStrip()
   {
     displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
+
+    // Light up brake lights manually
+    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
+    NeoPixel.show();
   }
+
 }
 
 void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int len)
@@ -259,11 +269,18 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
   memcpy(receivedMsg, incomingData, len);
   receivedMsg[len] = '\0';
 
-  if (strcmp(receivedMsg, "Stop") == 0)
+  if (strcmp(receivedMsg, "Start") == 0)
   {
     displayMessage("Received:", receivedMsg);
-    motorsWrite(0, 0, 0, 0);
-    headLights(true);
+    isMasterStopped = false;
+    const char *message = "Start received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+  }
+
+  else if (strcmp(receivedMsg, "Stop") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    isMasterStopped = true;
     const char *message = "Stop received";
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
 
@@ -296,15 +313,6 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
-  else if (strcmp(receivedMsg, "Start") == 0)
-  {
-    displayMessage("Received:", receivedMsg);
-    moveAccordingToStrip();
-    headLights(false);
-    const char *message = "Start received";
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-
-  }
 }
 
 
@@ -318,7 +326,6 @@ void setup()
   display.begin(i2c_Address, true); 
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
-  delay(1000);
 
   WiFi.mode(WIFI_STA);
 
@@ -356,8 +363,8 @@ void setup()
   pinMode(STRIP_SENSOR_4, INPUT);
 
   pinMode(LDR, INPUT);
-  pinMode(IR_SENSOR1_PIN, INPUT);
-  pinMode(IR_SENSOR2_PIN, INPUT);
+  //pinMode(IR_SENSOR1_PIN, INPUT);
+  //pinMode(IR_SENSOR2_PIN, INPUT);
 
   // Start Serial communication with DFPlayer Mini
   mp3Serial.begin(9600, SERIAL_8N1, 16, 17);  //rx=16, tx=17
@@ -380,6 +387,17 @@ void loop()
 
   if (!isConnected)
   {
-    backupStop();
+    moveAccordingToStrip();
   }
+  else if (isConnected && isMasterStopped)
+  {
+    motorsWrite(0, 0, 0, 0);
+    headLights(isMasterStopped);
+  }
+  else if (isConnected && !isMasterStopped)
+  {
+    moveAccordingToStrip();
+    headLights(isMasterStopped);
+  }
+
 }
