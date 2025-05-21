@@ -28,6 +28,11 @@
 #define NEOPIXEL_PIN 5 
 #define NUM_PIXELS 6
 
+// Blinker Settings
+#define interval 300
+unsigned long previousT = 0;
+bool blinkState = 0;
+
 // IR Sensor Pins
 #define STRIP_SENSOR_1 32
 #define STRIP_SENSOR_2 39
@@ -59,9 +64,10 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, 
 // Connection tracking
 bool isConnected = false;
 bool isMasterStopped = false;
+bool isIRtracking = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
 
-const unsigned long TIMEOUT = 6000; // Timeout period in milliseconds
+const unsigned long TIMEOUT = 8000; // Timeout period in milliseconds
 char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
 void headLights(bool isStopped)
@@ -87,6 +93,36 @@ void headLights(bool isStopped)
   {
     NeoPixel.clear();
     NeoPixel.show(); 
+  }
+}
+
+
+void leds(int i, int f, int r, int g, int b){
+  for (i; i <= f; i++) {
+    NeoPixel.setPixelColor(i, r, g, b);
+  }
+  NeoPixel.show();
+}
+
+void blinker(char dir){
+  unsigned long currentT = millis();
+  if(currentT - previousT >= interval){
+    previousT = currentT;
+    if(!blinkState){
+      blinkState = 1;
+      switch(dir){
+        case 'R':
+          NeoPixel.setPixelColor(3,100,50,0);
+          break;
+        case 'L':
+          NeoPixel.setPixelColor(2,100,50,0);
+          break;
+      }
+      NeoPixel.show();
+    }else{
+      leds(2,3,0,0,0);
+      blinkState = 0;
+    }
   }
 }
 
@@ -137,6 +173,7 @@ void moveAccordingToStrip()
   
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
+    blinker(intersectionTurn);
     displayMessage("state:", "intersection");
 
     if (intersectionTurn == 'F')
@@ -242,6 +279,15 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
+  else if (strcmp(receivedMsg, "Stop course") == 0)
+  {
+    displayMessage("Received:", receivedMsg);
+    isMasterStopped = true;
+    isIRtracking = true;
+    const char *message = "Stop received";
+    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+  }
+
   else if (strcmp(receivedMsg, "Stop") == 0)
   {
     displayMessage("Received:", receivedMsg);
@@ -333,7 +379,7 @@ void loop()
     isConnected = false;
   }
 
-  if (!isConnected)
+  if (!isConnected || isIRtracking)
   {
     if (digitalRead(IR_SENSOR1_PIN) == LOW || digitalRead(IR_SENSOR2_PIN) == LOW)
     {

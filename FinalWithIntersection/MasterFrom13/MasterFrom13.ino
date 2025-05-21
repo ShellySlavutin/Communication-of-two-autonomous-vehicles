@@ -50,6 +50,12 @@ Servo servo;
 #define NEOPIXEL_PIN 5 
 #define NUM_PIXELS 6
 
+// Blinker Settings
+#define interval 300
+unsigned long previousT = 0;
+bool blinkState = 0;
+
+
 #define LDR 34 //LDR pins
 
 float speed = 0.6; //speed for DC motors
@@ -104,6 +110,35 @@ void headLights(float distance)
     NeoPixel.show(); 
   }
 
+}
+
+void leds(int i, int f, int r, int g, int b){
+  for (i; i <= f; i++) {
+    NeoPixel.setPixelColor(i, r, g, b);
+  }
+  NeoPixel.show();
+}
+
+void blinker(char dir){
+  unsigned long currentT = millis();
+  if(currentT - previousT >= interval){
+    previousT = currentT;
+    if(!blinkState){
+      blinkState = 1;
+      switch(dir){
+        case 'R':
+          NeoPixel.setPixelColor(3,100,50,0);
+          break;
+        case 'L':
+          NeoPixel.setPixelColor(2,100,50,0);
+          break;
+      }
+      NeoPixel.show();
+    }else{
+      leds(2,3,0,0,0);
+      blinkState = 0;
+    }
+  }
 }
 
 
@@ -308,6 +343,7 @@ void loop()
     }
 
     motorsWrite(0, 0, 0, 0);
+    headLights(5);
 
     const char *message = "Stop";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
@@ -356,12 +392,14 @@ void loop()
       const char *message = "F";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
-      motorsWrite(0.6, 0.6, 0, 0);
+      motorsWrite(0.7, 0.7, 0, 0);
       delay(1000);
     }
     else if((disR > disF) && (disR > disL)){
       const char *message = "R";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+      blinker('R');
 
       motorsWrite(0,0.8,0,0);
       delay(1000);
@@ -370,6 +408,8 @@ void loop()
     else if((disL > disF) && (disL > disR)){
       const char *message = "L";
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
+
+      blinker('L');
 
       motorsWrite(0.8,0,0,0);
       delay(1000);
@@ -429,16 +469,13 @@ void loop()
   // Stop
   else
   {
-    const char *message = "Stop";
+    const char *message = "Stop course";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
     displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
 
-    // Light up brake lights manually
-    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.show();
+    headLights(5);
   }
 
   }
