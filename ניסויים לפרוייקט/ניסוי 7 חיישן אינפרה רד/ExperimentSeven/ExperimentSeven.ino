@@ -20,14 +20,12 @@ void loop()
   int rawValue1 = digitalRead(IR_SENSOR1_PIN);
   int rawValue2 = digitalRead(IR_SENSOR2_PIN);
 
-    Serial.print("Raw Value1:");
-    Serial.println(rawValue1);  
+  Serial.print("Raw Value1:");
+  Serial.println(rawValue1);  
 
 
-    Serial.print("Raw Value2:");
-    Serial.println(rawValue2);  
-
-
+  Serial.print("Raw Value2:");
+  Serial.println(rawValue2);  
 
 
   // Delay to reduce noise (adjust as needed)

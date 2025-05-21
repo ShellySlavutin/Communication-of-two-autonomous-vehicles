@@ -7,7 +7,7 @@
 #include "DFRobotDFPlayerMini.h"
 
 // OLED pins
-#define i2c_Address 0x3c // OLED screen I2C address
+#define i2c_Address 0x3c 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
@@ -15,16 +15,10 @@
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 36
+#define STRIP_SENSOR_1 32
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 35
-
-// OLED pins
-#define i2c_Address 0x3c // OLED screen I2C address
-#define SCREEN_WIDTH 128 
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1 
+#define STRIP_SENSOR_4 33
 
 // Motor and PWM pins
 #define Motor_B1 12 
@@ -71,9 +65,17 @@ void setup() {
 
 void loop() 
 {
+  moveAccordingToLine();
+}
+
+
+//FUNCTIONS
+
+void moveAccordingToLine()
+{
   if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.7, 0.7, 0, 0);
+    motorsWrite(0.5, 0.5, 0, 0);
     displayMessage("state:", "foward");
   } 
 
@@ -107,16 +109,15 @@ void loop()
   else if (digitalRead(STRIP_SENSOR_3))
   {
     displayMessage("state:", "left");    
-    motorsWrite(0.8, 0.5, 0, 0);
+    motorsWrite(0.8, 0.4, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
     displayMessage("state:", "right");    
-    motorsWrite(0.5, 0.8, 0, 0);
+    motorsWrite(0.4, 0.8, 0, 0);
   } 
-
 
   // Stop
   else
@@ -130,9 +131,6 @@ void loop()
     NeoPixel.show();
   }
 }
-
-
-//FUNCTIONS
 
 void motorsWrite(float m1, float m2, float m3, float m4) {
   ledcWrite(Motor_F1, m1 * 255);
