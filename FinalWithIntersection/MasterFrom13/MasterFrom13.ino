@@ -278,29 +278,24 @@ void setup()
 
 void loop()
 {
+  
   dayNightMode();
 
   float distance = calculateDistance();
   headLights(distance);
 
-  /*
-  display.setCursor(2,10);
-  display.print(digitalRead(STRIP_SENSOR_1));
-  display.display();
+  if (distance < MIN_DISTANCE)
+  {
 
-  display.setCursor(2,20);
-  display.print(digitalRead(STRIP_SENSOR_2));
-  display.display();
+    const char *message = "Stop";
+    esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
-  display.setCursor(2,30);
-  display.print(digitalRead(STRIP_SENSOR_3));
-  display.display();
+    displayMessage("state:", "stop");    
+    motorsWrite(0, 0, 0, 0);
 
-  display.setCursor(2,40);
-  display.print(digitalRead(STRIP_SENSOR_4));
-  display.display();*/
-
-
+  }
+  else
+  {
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
     bool Tintersection = true;
@@ -386,8 +381,8 @@ void loop()
   {
     const char *message = "Start";
     esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
-    
-    motorsWrite(0.6, 0.6, 0, 0);
+
+    motorsWrite(0.7, 0.7, 0, 0);
     displayMessage("state:", "foward");
   } 
 
@@ -396,7 +391,11 @@ void loop()
   {
     motorsWrite(0.8,0,0,0);
     displayMessage("state:", "extreme left");    
-    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3));
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme left loop");
+      motorsWrite(0.8,0,0,0);
+    }
 
   }
 
@@ -405,7 +404,11 @@ void loop()
   {
     motorsWrite(0,0.8,0,0);
     displayMessage("state:", "extreme right");  
-    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3));
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme right loop");
+      motorsWrite(0,0.8,0,0);
+    }
      
   }
 
@@ -436,6 +439,8 @@ void loop()
     NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
     NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
     NeoPixel.show();
+  }
+
   }
 
 }

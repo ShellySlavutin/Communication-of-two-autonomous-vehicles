@@ -36,8 +36,8 @@
 
 
 // Define the analog pin connected to the IR sensor
-//#define IR_SENSOR1_PIN 35 
-//#define IR_SENSOR2_PIN 36
+#define IR_SENSOR1_PIN 35 
+#define IR_SENSOR2_PIN 36
 
 #define LDR 34
 
@@ -61,8 +61,7 @@ bool isConnected = false;
 bool isMasterStopped = false;
 unsigned long lastReceivedTime = 0;  // Time when the last message was received
 
-const unsigned long TIMEOUT = 10000; // Timeout period in milliseconds
-//const unsigned long TIMEOUT2 = 3000; // Timeout period in milliseconds
+const unsigned long TIMEOUT = 6000; // Timeout period in milliseconds
 char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
 void headLights(bool isStopped)
@@ -91,21 +90,6 @@ void headLights(bool isStopped)
   }
 }
 
-void headLightsNight()
-{
-  NeoPixel.clear();
-  if (digitalRead(LDR) == LOW)
-  {
-    NeoPixel.setPixelColor(0, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(1, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(2, NeoPixel.Color(255, 255, 150));  
-    NeoPixel.setPixelColor(3, NeoPixel.Color(255, 255, 150)); 
-    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.show();
-  }
-}
-
 void dayNightMode()
 {
   if ((digitalRead(LDR) == LOW))
@@ -129,22 +113,6 @@ void dayNightMode()
   }
 }
 
-
-/*void backupStop() 
-{
-  int rawValue1 = digitalRead(IR_SENSOR1_PIN);
-  int rawValue2 = digitalRead(IR_SENSOR2_PIN);
-
-  if (rawValue1 == HIGH || rawValue2 == HIGH) 
-  {
-    moveAccordingToStrip();
-  } 
-  else 
-  {
-    motorsWrite(0, 0, 0, 0);
-  }
-
-}*/
 
 void displayMessage(String title, String message)
 {
@@ -252,10 +220,7 @@ void moveAccordingToStrip()
     displayMessage("state:", "stop");    
     motorsWrite(0, 0, 0, 0);
 
-    // Light up brake lights manually
-    NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
-    NeoPixel.show();
+    headLights(true);
   }
 
 }
@@ -286,32 +251,16 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 
   }
 
-  else if (strcmp(receivedMsg, "F") == 0)
+  else if (strcmp(receivedMsg, "F") == 0 || strcmp(receivedMsg, "R") == 0 || strcmp(receivedMsg, "L") == 0)
   {
     displayMessage("Received:", receivedMsg);
     intersectionTurn = receivedMsg[0];
 
-    const char *message = "F received";
+    char message[10];
+    snprintf(message, sizeof(message), "%c received", receivedMsg[0]);
     esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
-  else if (strcmp(receivedMsg, "R") == 0)
-  {
-    displayMessage("Received:", receivedMsg);
-    intersectionTurn = receivedMsg[0];
-
-    const char *message = "R received";
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-  }
-
-  else if (strcmp(receivedMsg, "L") == 0)
-  {
-    displayMessage("Received:", receivedMsg);
-    intersectionTurn = receivedMsg[0];
-
-    const char *message = "L received";
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
-  }
 
 }
 
@@ -363,8 +312,8 @@ void setup()
   pinMode(STRIP_SENSOR_4, INPUT);
 
   pinMode(LDR, INPUT);
-  //pinMode(IR_SENSOR1_PIN, INPUT);
-  //pinMode(IR_SENSOR2_PIN, INPUT);
+  pinMode(IR_SENSOR1_PIN, INPUT);
+  pinMode(IR_SENSOR2_PIN, INPUT);
 
   // Start Serial communication with DFPlayer Mini
   mp3Serial.begin(9600, SERIAL_8N1, 16, 17);  //rx=16, tx=17
@@ -376,7 +325,6 @@ void setup()
 void loop()
 {  
   dayNightMode();
-  headLightsNight();
 
   // Check for connection timeout
   if (millis() - lastReceivedTime > TIMEOUT)
@@ -387,7 +335,16 @@ void loop()
 
   if (!isConnected)
   {
-    moveAccordingToStrip();
+    if (digitalRead(IR_SENSOR1_PIN) == LOW || digitalRead(IR_SENSOR2_PIN) == LOW)
+    {
+      motorsWrite(0, 0, 0, 0);
+      headLights(true);
+    }
+    else 
+    {
+      moveAccordingToStrip();
+      headLights(false);
+    }
   }
   else if (isConnected && isMasterStopped)
   {

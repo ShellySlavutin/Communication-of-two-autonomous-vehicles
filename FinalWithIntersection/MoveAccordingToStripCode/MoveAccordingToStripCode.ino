@@ -15,10 +15,10 @@
 Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // Creating an object for communication with the OLED screen
 
 // IR Sensor Pins
-#define STRIP_SENSOR_1 32
+#define STRIP_SENSOR_1 36
 #define STRIP_SENSOR_2 39
 #define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 33
+#define STRIP_SENSOR_4 35
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -73,22 +73,8 @@ void loop()
 {
   if (digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3))
   {
-    motorsWrite(0.5, 0.5, 0, 0);
+    motorsWrite(0.7, 0.7, 0, 0);
     displayMessage("state:", "foward");
-
-  // Extreme correcting to the left at the start, when the middle sensors see the line
-   if(digitalRead(STRIP_SENSOR_4))
-   {
-    motorsWrite(0.8,0,0,0);
-    displayMessage("state:", "extreme left");  
-   }
-
-   // Extreme correcting to the right at the start, when the middle sensors see the line
-   else if(digitalRead(STRIP_SENSOR_1))
-   {
-    motorsWrite(0,0.8,0,0);
-    displayMessage("state:", "extreme right");   
-   }
   } 
 
   // Extreme correcting to the left in the end, when only STRIP_SENSOR_4 is able to see the line
@@ -96,7 +82,11 @@ void loop()
   {
     motorsWrite(0.8,0,0,0);
     displayMessage("state:", "extreme left");    
-    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme left loop");
+      motorsWrite(0.8,0,0,0);
+    }
 
   }
 
@@ -105,7 +95,11 @@ void loop()
   {
     motorsWrite(0,0.8,0,0);
     displayMessage("state:", "extreme right");  
-    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)); // keep turning until it sees the line
+    while(!digitalRead(STRIP_SENSOR_2) && !digitalRead(STRIP_SENSOR_3)) // keep turning until it sees the line
+    {
+      displayMessage("state:", "extreme right loop");
+      motorsWrite(0,0.8,0,0);
+    }
      
   }
 
@@ -113,15 +107,16 @@ void loop()
   else if (digitalRead(STRIP_SENSOR_3))
   {
     displayMessage("state:", "left");    
-    motorsWrite(0.8, 0.4, 0, 0);
+    motorsWrite(0.8, 0.5, 0, 0);
   } 
 
   // Minor correcting to the right, when the car moves a bit, when there are twists.
   else if (digitalRead(STRIP_SENSOR_2))
   {
     displayMessage("state:", "right");    
-    motorsWrite(0.4, 0.8, 0, 0);
+    motorsWrite(0.5, 0.8, 0, 0);
   } 
+
 
   // Stop
   else
