@@ -167,7 +167,7 @@ void headLights(bool isStopped)
 /**
  * @brief Activates rear brake lights using NeoPixels.
  * 
- * This function is typically called when the robot is stopping, idle, or at an intersection.
+ * This function is called when the robot is stopping, idle, or at an intersection.
  */
 void brakeLights()
 {
@@ -195,9 +195,9 @@ void dayNightMode()
           flagLDR = false; // Clear flag to avoid replaying the audio repeatedly
       }
   }
-  else
+  else // It is day (LDR reads HIGH)
   {
-      // It is day (LDR reads HIGH)
+      // If this is the first time detecting light, play light mode audio
       if(flagLDR)
       {
           mp3.play(3); // Play the third MP3 file (0003.mp3) indicating day mode
@@ -403,7 +403,7 @@ void setup()
 {
   // ===== OLED Display Initialization =====
 
-  // Initialize the SH1106 OLED display
+  // Initialize the OLED display
   display.begin(i2c_Address, true); 
   display.clearDisplay();                      // Clear any previous content
   display.setTextColor(SH110X_WHITE);         // Set text color to white
