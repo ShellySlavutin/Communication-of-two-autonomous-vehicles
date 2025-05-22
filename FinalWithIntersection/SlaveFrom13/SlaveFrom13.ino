@@ -5,6 +5,7 @@
 #include <esp_now.h>
 #include <Adafruit_NeoPixel.h>
 #include "DFRobotDFPlayerMini.h" 
+#include <iostream>
 
 // OLED pins
 #define i2c_Address 0x3c // OLED screen I2C address
@@ -70,6 +71,27 @@ unsigned long lastReceivedTime = 0;  // Time when the last message was received
 const unsigned long TIMEOUT = 8000; // Timeout period in milliseconds
 char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
+#define COMMAND_QUEUE_SIZE 5
+
+std::vector<char> q;
+
+bool isEmpty() { return q.empty(); }
+
+void enqueue(int x) {
+  q.push_back(x);
+}
+
+void dequeue() {
+  if (!isEmpty()) q.erase(q.begin());
+}
+
+char getFront() {
+  return isEmpty() ? 'z' : q.front();
+}
+
+
+
+
 void headLights(bool isStopped)
 {
   NeoPixel.clear();
@@ -96,35 +118,6 @@ void headLights(bool isStopped)
   }
 }
 
-
-void leds(int i, int f, int r, int g, int b){
-  for (i; i <= f; i++) {
-    NeoPixel.setPixelColor(i, r, g, b);
-  }
-  NeoPixel.show();
-}
-
-void blinker(char dir){
-  unsigned long currentT = millis();
-  if(currentT - previousT >= interval){
-    previousT = currentT;
-    if(!blinkState){
-      blinkState = 1;
-      switch(dir){
-        case 'R':
-          NeoPixel.setPixelColor(3,100,50,0);
-          break;
-        case 'L':
-          NeoPixel.setPixelColor(2,100,50,0);
-          break;
-      }
-      NeoPixel.show();
-    }else{
-      leds(2,3,0,0,0);
-      blinkState = 0;
-    }
-  }
-}
 
 void dayNightMode()
 {
@@ -173,7 +166,9 @@ void moveAccordingToStrip()
   
   if(digitalRead(STRIP_SENSOR_1) && digitalRead(STRIP_SENSOR_2) && digitalRead(STRIP_SENSOR_3) && digitalRead(STRIP_SENSOR_4))
   {
-    blinker(intersectionTurn);
+    intersectionTurn = getFront();
+    dequeue();
+
     displayMessage("state:", "intersection");
 
     if (intersectionTurn == 'F')
@@ -299,12 +294,12 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 
   else if (strcmp(receivedMsg, "F") == 0 || strcmp(receivedMsg, "R") == 0 || strcmp(receivedMsg, "L") == 0)
   {
-    displayMessage("Received:", receivedMsg);
-    intersectionTurn = receivedMsg[0];
+  displayMessage("Queued:", receivedMsg);
+  enqueue(receivedMsg[0]);
 
-    char message[10];
-    snprintf(message, sizeof(message), "%c received", receivedMsg[0]);
-    esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
+  char message[10];
+  snprintf(message, sizeof(message), "%c received", receivedMsg[0]);
+  esp_now_send(masterAddress, (uint8_t *)message, strlen(message));
   }
 
 
