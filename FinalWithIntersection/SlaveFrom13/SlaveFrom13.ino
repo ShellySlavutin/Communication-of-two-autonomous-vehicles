@@ -72,23 +72,27 @@ const unsigned long TIMEOUT = 8000; // Timeout period in milliseconds
 char intersectionTurn = 'z'; // The direction to turn to while in an itersection
 
 #define COMMAND_QUEUE_SIZE 5
-
 std::vector<char> q;
 
-bool isEmpty() { return q.empty(); }
+bool isEmpty()
+{ 
+  return q.empty(); 
+}
 
-void enqueue(int x) {
+void enqueue(int x) 
+{
   q.push_back(x);
 }
 
-void dequeue() {
+void dequeue() 
+{
   if (!isEmpty()) q.erase(q.begin());
 }
 
-char getFront() {
+char getFront() 
+{
   return isEmpty() ? 'z' : q.front();
 }
-
 
 
 

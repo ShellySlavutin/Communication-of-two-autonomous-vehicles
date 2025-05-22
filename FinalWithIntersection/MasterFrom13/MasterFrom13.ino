@@ -132,7 +132,7 @@ void headLights(float distance)
  * 
  * This function is typically called when the robot is stopping, idle, or at an intersection.
  */
-void breakLights()
+void brakeLights()
 {
   NeoPixel.setPixelColor(4, NeoPixel.Color(255, 0, 0));  
   NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
@@ -392,7 +392,7 @@ void loop()
       }
 
       motorsWrite(0, 0, 0, 0);  // Stop the motors
-      breakLights();            // Turn on brake lights
+      brakeLights();            // Turn on brake lights
 
       const char *message = "Stop";  // Send stop command
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
@@ -511,7 +511,7 @@ void loop()
       esp_now_send(slaveAddress, (uint8_t *)message, strlen(message));
 
       motorsWrite(0, 0, 0, 0);  // Stop all motors
-      breakLights();           // Turn on brake lights
+      brakeLights();           // Turn on brake lights
     }
   }
 
