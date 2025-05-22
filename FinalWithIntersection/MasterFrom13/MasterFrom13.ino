@@ -1,75 +1,75 @@
-// Include necessary libraries
-#include <Wire.h>                      // For I2C communication
-#include <Adafruit_GFX.h>              // Core graphics library
-#include <Adafruit_SH110X.h>           // SH1106 OLED library
-#include <WiFi.h>                      // For ESP32 WiFi functions
-#include <esp_now.h>                   // For ESP-NOW communication
-#include <Adafruit_NeoPixel.h>         // For controlling NeoPixel LEDs
-#include "DFRobotDFPlayerMini.h"       // For DFPlayer Mini MP3 module
-#include <ESP32Servo.h>                // For controlling Servo motor
+// === Include necessary libraries ===
+#include <Wire.h>                      // For I2C communication (OLED)
+#include <Adafruit_GFX.h>              // Core graphics library for OLED
+#include <Adafruit_SH110X.h>           // SH1106 OLED driver
+#include <WiFi.h>                      // Required for ESP-NOW on ESP32
+#include <esp_now.h>                   // ESP-NOW protocol for wireless communication
+#include <Adafruit_NeoPixel.h>         // Library for NeoPixel RGB LED strip
+#include "DFRobotDFPlayerMini.h"       // DFPlayer Mini MP3 module control
+#include <ESP32Servo.h>                // For controlling a servo motor
 
-// Declare servo object
-Servo servo;
+// === Declare servo object ===
+Servo servo;                           // Servo motor object
 
-// OLED screen configuration
-#define i2c_Address 0x3c
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
+// === OLED Display Configuration ===
+#define i2c_Address 0x3c               // OLED I2C address
+#define SCREEN_WIDTH 128               // OLED width in pixels
+#define SCREEN_HEIGHT 64               // OLED height in pixels
+#define OLED_RESET -1                  // OLED reset pin (-1 = not used)
 
-// Ultrasonic sensor pins
-#define triger_Pin 32
-#define echo_Pin 33  
-#define MIN_DISTANCE 10  // Stopping distance threshold in cm
+// === Ultrasonic Sensor Configuration ===
+#define triger_Pin 32                  // Ultrasonic trigger pin
+#define echo_Pin 33                    // Ultrasonic echo pin
+#define MIN_DISTANCE 10                // Minimum safe distance (in cm)
 
-// Motor driver pins
-#define Motor_B1 12 
-#define Motor_F1 13 
-#define Motor_B2 4  
-#define Motor_F2 25 
+// === Motor Driver Pin Definitions ===
+#define Motor_B1 12                    // Motor 1 - backward
+#define Motor_F1 13                    // Motor 1 - forward
+#define Motor_B2 4                     // Motor 2 - backward
+#define Motor_F2 25                    // Motor 2 - forward
 
-// PWM configuration
-#define Resolution 8
-#define Freq 1000
-#define PWM_CHANNEL_B1 0
-#define PWM_CHANNEL_F1 1
-#define PWM_CHANNEL_B2 2
-#define PWM_CHANNEL_F2 3
+// === PWM Configuration for Motors ===
+#define Resolution 8                   // PWM resolution (8-bit)
+#define Freq 1000                      // PWM frequency (Hz)
+#define PWM_CHANNEL_B1 0               // PWM channel for Motor_B1
+#define PWM_CHANNEL_F1 1               // PWM channel for Motor_F1
+#define PWM_CHANNEL_B2 2               // PWM channel for Motor_B2
+#define PWM_CHANNEL_F2 3               // PWM channel for Motor_F2
 
-// Line sensor pins
-#define STRIP_SENSOR_1 36
-#define STRIP_SENSOR_2 39
-#define STRIP_SENSOR_3 15
-#define STRIP_SENSOR_4 35
+// === Line-Following IR Sensor Pins ===
+#define STRIP_SENSOR_1 36              // Far left IR sensor
+#define STRIP_SENSOR_2 39              // Mid left IR sensor
+#define STRIP_SENSOR_3 15              // Mid right IR sensor
+#define STRIP_SENSOR_4 35              // Far right IR sensor
 
-// RGB LED pins
-#define BLUE_RGB_PIN 2
-#define RED_RGB_PIN 26
-#define GREEN_RGB_PIN 27
+// === RGB LED Pin Definitions ===
+#define BLUE_RGB_PIN 2                 // Blue LED pin
+#define RED_RGB_PIN 26                 // Red LED pin
+#define GREEN_RGB_PIN 27               // Green LED pin
 
-// NeoPixel configuration
-#define NEOPIXEL_PIN 5 
-#define NUM_PIXELS 6
+// === NeoPixel LED Strip Configuration ===
+#define NEOPIXEL_PIN 5                 // NeoPixel data pin
+#define NUM_PIXELS 6                   // Number of NeoPixels in the strip
 
-// LDR pin
-#define LDR 34
+// === LDR (Light Sensor) Pin ===
+#define LDR 34                         // Analog pin connected to LDR
 
-// LDR state flag for triggering day/night announcement once
-bool flagLDR = true; 
+// === LDR Day/Night Flag ===
+bool flagLDR = true;                  // Used to announce day/night only once per change
 
-// Variable to store last message received from slave
-char lastReceivedMsg[20] = ""; 
+// === ESP-NOW Communication ===
+char lastReceivedMsg[20] = "";        // Stores the most recent message from slave
 
-// MAC address of the slave ESP32 device
-uint8_t slaveAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54};
+// === Slave ESP32 MAC Address ===
+uint8_t slaveAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54};  // Slave device MAC
 
-// Create NeoPixel and OLED display objects
-Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// === Peripheral Objects Initialization ===
+Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);  // NeoPixel object
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); // OLED object
 
-// Setup software serial for DFPlayer Mini
-HardwareSerial mp3Serial(1);
-DFRobotDFPlayerMini mp3;
+// === DFPlayer Mini Audio Setup ===
+HardwareSerial mp3Serial(1);          // Use UART1 (TX1/RX1) for DFPlayer Mini
+DFRobotDFPlayerMini mp3;              // Create DFPlayer object for MP3 control
 
 // ===== Function Declarations =====
 void headLights(float distance);
@@ -84,7 +84,7 @@ void moveServo(int angle);
 // ===== Function Definitions Start =====
 
 /**
- * Controls NeoPixel headlights and brake lights based on ambient light and distance to an obstacle.
+ * @brief Controls NeoPixel headlights and brake lights based on ambient light and distance to an obstacle.
  * 
  * @param distance Distance to the nearest obstacle. Used to determine if the robot should stop.
  */
@@ -128,7 +128,7 @@ void headLights(float distance)
 
 
 /**
- * Activates rear brake lights using NeoPixels.
+ * @brief Activates rear brake lights using NeoPixels.
  * 
  * This function is typically called when the robot is stopping, idle, or at an intersection.
  */
@@ -138,11 +138,10 @@ void brakeLights()
   NeoPixel.setPixelColor(5, NeoPixel.Color(255, 0, 0));  
   
   NeoPixel.show(); // update to the NeoPixel Led Strip
-
 }
 
 /**
- * Detects transition between day and night using the LDR sensor and plays corresponding audio.
+ * @brief Detects transition between day and night using the LDR sensor and plays corresponding audio.
  * 
  * Plays a night mode audio cue if transitioning to night,
  * or a day mode cue if transitioning to day. Uses a flag to prevent repeated playback.
@@ -171,7 +170,7 @@ void dayNightMode()
 }
 
 /**
- * Displays a title and a message on the OLED screen.
+ * @brief Displays a title and a message on the OLED screen.
  * 
  * @param title   The title text to display at the top.
  * @param message The message text to display below the title.
@@ -188,18 +187,16 @@ void displayMessage(String title, String message)
 }
 
 /**
- * Callback function called when data is sent via ESP-NOW.
+ * @brief Callback function called when data is sent via ESP-NOW.
  * 
  * @param mac_addr MAC address of the receiver.
- * @param status   Status of the send operation (success or failure).
  */
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  // You can handle or log sending status here if needed
 }
 
 /**
- * Callback function called when data is received via ESP-NOW.
+ * @brief Callback function called when data is received via ESP-NOW.
  * 
  * @param mac         MAC address of the sender.
  * @param incomingData Pointer to the incoming data buffer.
@@ -228,7 +225,7 @@ void onDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
 }
 
 /**
- * Measures distance using an ultrasonic sensor.
+ * @brief Measures distance using an ultrasonic sensor.
  * 
  * @return Distance measured in centimeters.
  */
@@ -245,14 +242,15 @@ float calculateDistance()
 }
 
 /**
- * Controls the speed of four motors using PWM signals.
+ * @brief Controls the speed of four motors using PWM signals.
  * 
  * @param m1 Speed for motor 1 (range 0.0 to 1.0).
  * @param m2 Speed for motor 2 (range 0.0 to 1.0).
  * @param m3 Speed for motor 3 (range 0.0 to 1.0).
  * @param m4 Speed for motor 4 (range 0.0 to 1.0).
  */
-void motorsWrite(float m1, float m2, float m3, float m4) {
+void motorsWrite(float m1, float m2, float m3, float m4) 
+{
   ledcWrite(Motor_F1, m1 * 255); // Write PWM value for motor 1
   ledcWrite(Motor_F2, m2 * 255); // Write PWM value for motor 2
   ledcWrite(Motor_B1, m3 * 255); // Write PWM value for motor 3
@@ -260,11 +258,12 @@ void motorsWrite(float m1, float m2, float m3, float m4) {
 }
 
 /**
- * Moves the servo to the specified angle.
+ * @brief Moves the servo to the specified angle.
  * 
  * @param angle Angle to move the servo to (degrees).
  */
-void moveServo(int angle) {
+void moveServo(int angle) 
+{
   servo.attach(18, 500, 2500);  // Attach servo to pin 18 with min/max pulse widths
   servo.write(angle);           // Move servo to the desired angle
   delay(500);                  // Wait for servo to reach the position
