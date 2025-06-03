@@ -1,7 +1,7 @@
 #include <ESP32Servo.h>
 
 const int servoPin = 18;
-const int time_for_delay = 2000;
+const int time_for_delay = 500;
 
 Servo myServo;
 

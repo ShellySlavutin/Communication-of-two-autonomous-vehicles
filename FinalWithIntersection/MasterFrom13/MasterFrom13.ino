@@ -23,10 +23,17 @@ Servo servo;                           // Servo motor object
 #define MIN_DISTANCE 10                // Minimum safe distance (in cm)
 
 // === Motor Driver Pin Definitions ===
+#define Motor_B1 13                    // Motor 1 - backward
+#define Motor_F1 12                    // Motor 1 - forward
+#define Motor_B2 25                     // Motor 2 - backward
+#define Motor_F2 4                    // Motor 2 - forward
+
+/*// === Motor Driver Pin Definitions ===
 #define Motor_B1 12                    // Motor 1 - backward
 #define Motor_F1 13                    // Motor 1 - forward
 #define Motor_B2 4                     // Motor 2 - backward
 #define Motor_F2 25                    // Motor 2 - forward
+*/
 
 // === PWM Configuration for Motors ===
 #define Resolution 8                   // PWM resolution (8-bit)
@@ -62,6 +69,7 @@ char lastReceivedMsg[20] = "";        // Stores the most recent message from sla
 
 // === Slave ESP32 MAC Address ===
 uint8_t slaveAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54};  // Slave device MAC
+//0xFC, 0xE8, 0xC0, 0x91, 0x6D, 0x54
 
 // === Peripheral Objects Initialization ===
 Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);  // NeoPixel object

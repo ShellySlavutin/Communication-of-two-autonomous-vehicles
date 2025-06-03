@@ -51,9 +51,11 @@ float speed = 0.7;                      // Default motor speed (range 0.0 to 1.0
 // === ESP-NOW Communication Variables ===
 String receivedMsg = " ";              // Received message string
 char lastReceivedMsg[20] = "";         // Last received message stored for repeat use
-uint8_t masterAddress[] = {            // MAC address of the ESP32 slave
-  0x08, 0xA6, 0xF7, 0x08, 0x3E, 0x98
-};
+uint8_t masterAddress[] = {0xFC, 0xE8, 0xC0, 0x91, 0x6B, 0x70};         // MAC address of the ESP32 slave
+
+//fc:e8:c0:91:6b:70
+// 0x08, 0xA6, 0xF7, 0x08, 0x3E, 0x98
+
 
 // === DFPlayer Mini Audio ===
 HardwareSerial mp3Serial(1);           // Use UART1 for DFPlayer Mini (TX1/RX1)
